@@ -10,7 +10,7 @@ security controls across RHEL 8 and RHEL 9.
 **License**: MIT
 **Python**: 3.10+
 **ATT&CK Matrix**: https://attack.mitre.org/matrices/enterprise/linux/
-**Current Phase**: Phase 1 (Foundation) — Complete
+**Current Phase**: Phase 2 (Discovery Modules) — Complete
 
 ---
 
@@ -470,33 +470,33 @@ Required class attributes: `TECHNIQUE_ID`, `TECHNIQUE_NAME`, `TACTIC`, `SEVERITY
 - [x] HTML report template (`templates/report.html`) — dark-themed, expandable findings
 - [x] Test fixtures and initial unit tests
 
-### Phase 2 — Discovery Modules (26 techniques)
-- [ ] T1082 System Information Discovery
-- [ ] T1087 Account Discovery (local + domain)
-- [ ] T1069 Permission Groups Discovery
-- [ ] T1046 Network Service Discovery
-- [ ] T1083 File and Directory Discovery
-- [ ] T1057 Process Discovery
-- [ ] T1049 System Network Connections Discovery
-- [ ] T1016 System Network Configuration Discovery
-- [ ] T1518 Software Discovery (security + backup)
-- [ ] T1007 System Service Discovery
-- [ ] T1033 System Owner/User Discovery
-- [ ] T1018 Remote System Discovery
-- [ ] T1135 Network Share Discovery
-- [ ] T1201 Password Policy Discovery
-- [ ] T1124 System Time Discovery
-- [ ] T1120 Peripheral Device Discovery
-- [ ] T1010 Application Window Discovery
-- [ ] T1217 Browser Information Discovery
-- [ ] T1652 Device Driver Discovery
-- [ ] T1654 Log Enumeration
-- [ ] T1680 Local Storage Discovery
-- [ ] T1614.001 System Language Discovery
-- [ ] T1673 Virtual Machine Discovery
-- [ ] T1622 Debugger Evasion
-- [ ] T1040 Network Sniffing
-- [ ] T1497 Virtualization/Sandbox Evasion
+### Phase 2 — Discovery Modules (26 techniques) (COMPLETE)
+- [x] T1082 System Information Discovery
+- [x] T1087 Account Discovery (local + domain)
+- [x] T1069 Permission Groups Discovery
+- [x] T1046 Network Service Discovery
+- [x] T1083 File and Directory Discovery
+- [x] T1057 Process Discovery
+- [x] T1049 System Network Connections Discovery
+- [x] T1016 System Network Configuration Discovery
+- [x] T1518 Software Discovery (security + backup)
+- [x] T1007 System Service Discovery
+- [x] T1033 System Owner/User Discovery
+- [x] T1018 Remote System Discovery
+- [x] T1135 Network Share Discovery
+- [x] T1201 Password Policy Discovery
+- [x] T1124 System Time Discovery
+- [x] T1120 Peripheral Device Discovery
+- [x] T1010 Application Window Discovery
+- [x] T1217 Browser Information Discovery
+- [x] T1652 Device Driver Discovery
+- [x] T1654 Log Enumeration
+- [x] T1680 Local Storage Discovery
+- [x] T1614.001 System Language Discovery
+- [x] T1673 Virtual Machine Discovery
+- [x] T1622 Debugger Evasion
+- [x] T1040 Network Sniffing
+- [x] T1497 Virtualization/Sandbox Evasion
 
 ### Phase 3 — Credential Access (15 techniques)
 - [ ] T1003 OS Credential Dumping (/etc/shadow, proc, ccache)
