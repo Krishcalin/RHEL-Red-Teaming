@@ -15,6 +15,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskPr
 from rich.table import Table
 
 import modules
+from core.banner import display_banner
 from core.logger import EvidenceLogger
 from core.models import (
     ModuleResult,
@@ -77,23 +78,16 @@ class ScanEngine:
 
         return filtered
 
-    def _display_banner(self, target: Target) -> None:
-        """Display authorization banner before scanning."""
-        console.print()
-        console.print("[bold red]" + "=" * 70 + "[/]")
-        console.print("[bold red]  RHEL Red Teaming Tool — MITRE ATT&CK Security Scanner[/]")
-        console.print("[bold red]" + "=" * 70 + "[/]")
-        console.print()
-        console.print("[yellow]  WARNING: This tool performs active security testing.[/]")
-        console.print("[yellow]  Ensure you have proper authorization before proceeding.[/]")
-        console.print()
-        console.print(f"  Target:   [cyan]{target.host}[/]")
-        console.print(f"  Mode:     [cyan]{'Simulate' if self.config.simulate else 'Check-only'}[/]")
-        console.print(f"  Profile:  [cyan]{self.config.profile}[/]")
-        console.print(f"  Modules:  [cyan]{len(self._filter_modules())}[/]")
-        console.print()
-        console.print("[bold red]" + "=" * 70 + "[/]")
-        console.print()
+    def _display_banner(self, target: Target, os_info: dict[str, str] | None = None) -> None:
+        """Display professional authorization banner before scanning."""
+        display_banner(
+            console=console,
+            target_host=target.host,
+            mode="SIMULATE" if self.config.simulate else "CHECK-ONLY (passive)",
+            profile=self.config.profile,
+            module_count=len(self._filter_modules()),
+            os_info=os_info,
+        )
 
     def _display_results_table(self, results: list[ModuleResult]) -> None:
         """Display scan results as a rich table."""
@@ -143,10 +137,9 @@ class ScanEngine:
             start_time=datetime.now(),
         )
 
-        self._display_banner(target)
-
         active_modules = self._filter_modules()
         if not active_modules:
+            self._display_banner(target)
             console.print("[yellow]No modules matched the filter criteria.[/]")
             scan_result.end_time = datetime.now()
             return scan_result
@@ -155,6 +148,8 @@ class ScanEngine:
             os_info = session.get_os_info()
             scan_result.target_info = os_info
             os_id = self._detect_os_id(os_info)
+
+            self._display_banner(target, os_info=os_info)
 
             log.info("scan_start", scan_id=scan_id, target=target.host, os=os_id)
 

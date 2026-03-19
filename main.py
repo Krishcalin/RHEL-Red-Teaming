@@ -10,6 +10,7 @@ import click
 import yaml
 from rich.console import Console
 
+from core.banner import display_compact_banner
 from core.engine import ScanEngine
 from core.logger import setup_logging
 from core.mitre_mapper import MitreMapper
@@ -177,6 +178,7 @@ def report(input_path: str, output_format: str) -> None:
 @cli.command(name="list-modules")
 def list_modules() -> None:
     """List all discovered technique modules."""
+    display_compact_banner(console)
     setup_logging(log_level="WARNING")
 
     config = ScanConfig()
@@ -213,6 +215,7 @@ def list_modules() -> None:
 @cli.command(name="list-tactics")
 def list_tactics() -> None:
     """List all supported ATT&CK tactics."""
+    display_compact_banner(console)
     from rich.table import Table
 
     table = Table(title="MITRE ATT&CK Tactics")
