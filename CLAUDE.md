@@ -10,7 +10,7 @@ security controls across RHEL 8 and RHEL 9.
 **License**: MIT
 **Python**: 3.10+
 **ATT&CK Matrix**: https://attack.mitre.org/matrices/enterprise/linux/
-**Current Phase**: Phase 2 (Discovery Modules) — Complete
+**Current Phase**: Phase 3 (Credential Access) — Complete
 
 ---
 
@@ -498,22 +498,22 @@ Required class attributes: `TECHNIQUE_ID`, `TECHNIQUE_NAME`, `TACTIC`, `SEVERITY
 - [x] T1040 Network Sniffing
 - [x] T1497 Virtualization/Sandbox Evasion
 
-### Phase 3 — Credential Access (15 techniques)
-- [ ] T1003 OS Credential Dumping (/etc/shadow, proc, ccache)
-- [ ] T1552 Unsecured Credentials (files, history, private keys)
-- [ ] T1110 Brute Force policy audit
-- [ ] T1556 Modify Authentication Process (PAM, MFA)
-- [ ] T1557 Adversary-in-the-Middle (ARP, DHCP)
-- [ ] T1555 Credentials from Password Stores
-- [ ] T1558 Kerberos Tickets (ccache files)
-- [ ] T1056 Input Capture (keylogging)
-- [ ] T1040 Network Sniffing
-- [ ] T1212 Exploitation for Credential Access
-- [ ] T1606 Forge Web Credentials
-- [ ] T1649 Steal/Forge Auth Certificates
-- [ ] T1539 Steal Web Session Cookie
-- [ ] T1111 MFA Interception
-- [ ] T1621 MFA Request Generation
+### Phase 3 — Credential Access (15 techniques) (COMPLETE)
+- [x] T1003 OS Credential Dumping (/etc/shadow, proc, ccache)
+- [x] T1552 Unsecured Credentials (files, history, private keys)
+- [x] T1110 Brute Force policy audit
+- [x] T1556 Modify Authentication Process (PAM, MFA)
+- [x] T1557 Adversary-in-the-Middle (ARP, DHCP)
+- [x] T1555 Credentials from Password Stores
+- [x] T1558 Kerberos Tickets (ccache files)
+- [x] T1056 Input Capture (keylogging)
+- [x] T1040 Network Sniffing (shared with Discovery)
+- [x] T1212 Exploitation for Credential Access
+- [x] T1606 Forge Web Credentials
+- [x] T1649 Steal/Forge Auth Certificates
+- [x] T1539 Steal Web Session Cookie
+- [x] T1111 MFA Interception
+- [x] T1621 MFA Request Generation
 
 ### Phase 4 — Privilege Escalation (12 techniques)
 - [ ] T1548 Abuse Elevation Control (SUID/SGID, sudo)
