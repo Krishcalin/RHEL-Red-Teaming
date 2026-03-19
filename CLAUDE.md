@@ -10,7 +10,7 @@ security controls across RHEL 8 and RHEL 9.
 **License**: MIT
 **Python**: 3.10+
 **ATT&CK Matrix**: https://attack.mitre.org/matrices/enterprise/linux/
-**Current Phase**: Phase 3 (Credential Access) — Complete
+**Current Phase**: Phase 4 (Privilege Escalation) — Complete
 
 ---
 
@@ -515,19 +515,19 @@ Required class attributes: `TECHNIQUE_ID`, `TECHNIQUE_NAME`, `TACTIC`, `SEVERITY
 - [x] T1111 MFA Interception
 - [x] T1621 MFA Request Generation
 
-### Phase 4 — Privilege Escalation (12 techniques)
-- [ ] T1548 Abuse Elevation Control (SUID/SGID, sudo)
-- [ ] T1068 Exploitation for Privilege Escalation (kernel CVEs)
-- [ ] T1055 Process Injection (ptrace, proc memory, VDSO)
-- [ ] T1574 Hijack Execution Flow (LD_PRELOAD, PATH)
-- [ ] T1611 Escape to Host (container escape)
-- [ ] T1547 Boot/Logon Autostart (kernel modules, XDG)
-- [ ] T1546 Event Triggered Execution (shell config, udev, trap)
-- [ ] T1543 Create/Modify System Process (systemd)
-- [ ] T1037 Boot/Logon Init Scripts (RC scripts)
-- [ ] T1053 Scheduled Task/Job (at, cron, systemd timers)
-- [ ] T1098 Account Manipulation
-- [ ] T1078 Valid Accounts
+### Phase 4 — Privilege Escalation (12 techniques) (COMPLETE)
+- [x] T1548 Abuse Elevation Control (SUID/SGID, sudo, GTFOBins, env_keep)
+- [x] T1068 Exploitation for Privilege Escalation (kernel CVEs, ASLR, hardening)
+- [x] T1055 Process Injection (ptrace, proc memory, VDSO, seccomp)
+- [x] T1574 Hijack Execution Flow (LD_PRELOAD, PATH, RPATH, ldconfig)
+- [x] T1611 Escape to Host (container escape, Docker socket, privileged mode)
+- [x] T1547 Boot/Logon Autostart (kernel modules, XDG autostart)
+- [x] T1546 Event Triggered Execution (shell config, udev, trap, Python hooks)
+- [x] T1543 Create/Modify System Process (systemd service hardening)
+- [x] T1037 Boot/Logon Init Scripts (rc.local, init.d, /etc/environment)
+- [x] T1053 Scheduled Task/Job (cron, at, systemd timers, writable scripts)
+- [x] T1098 Account Manipulation (authorized_keys, /etc/passwd, /etc/group)
+- [x] T1078 Valid Accounts (default accounts, empty passwords, expiry)
 
 ### Phase 5 — Execution & Persistence (28 techniques)
 - [ ] T1059 Command and Scripting Interpreter (bash, python, JS, Lua)
