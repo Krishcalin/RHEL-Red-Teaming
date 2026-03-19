@@ -1,0 +1,73 @@
+# RHEL Red Teaming Tool — Technique Enable/Disable
+# Set to false to skip specific techniques during scans.
+
+techniques:
+  # Discovery
+  T1082: true   # System Information Discovery
+  T1087: true   # Account Discovery
+  T1069: true   # Permission Groups Discovery
+  T1046: true   # Network Service Discovery
+  T1083: true   # File and Directory Discovery
+  T1057: true   # Process Discovery
+  T1049: true   # System Network Connections
+  T1016: true   # System Network Configuration
+  T1518: true   # Software Discovery
+  T1007: true   # System Service Discovery
+  T1033: true   # System Owner/User Discovery
+  T1018: true   # Remote System Discovery
+  T1135: true   # Network Share Discovery
+  T1201: true   # Password Policy Discovery
+  T1124: true   # System Time Discovery
+
+  # Credential Access
+  T1003: true   # OS Credential Dumping
+  T1552: true   # Unsecured Credentials
+  T1110: true   # Brute Force Policy
+  T1556: true   # Modify Authentication Process
+
+  # Privilege Escalation
+  T1548: true   # Abuse Elevation Control (SUID/Sudo)
+  T1068: true   # Exploitation for Privilege Escalation
+  T1055: true   # Process Injection
+  T1574: true   # Hijack Execution Flow
+  T1611: true   # Escape to Host
+
+  # Execution
+  T1059: true   # Command and Scripting Interpreter
+  T1053: true   # Scheduled Task/Job
+
+  # Persistence
+  T1098: true   # Account Manipulation
+  T1543: true   # Create/Modify System Process
+  T1546: true   # Event Triggered Execution
+  T1136: true   # Create Account
+
+  # Defense Evasion
+  T1562: true   # Impair Defenses
+  T1070: true   # Indicator Removal
+  T1036: true   # Masquerading
+  T1222: true   # File Permissions Modification
+  T1014: true   # Rootkit
+
+  # Lateral Movement
+  T1021: true   # Remote Services
+  T1570: true   # Lateral Tool Transfer
+  T1550: true   # Alternate Authentication Material
+
+  # Collection
+  T1005: true   # Data from Local System
+  T1560: true   # Archive Collected Data
+
+  # C2
+  T1071: true   # Application Layer Protocol
+  T1573: true   # Encrypted Channel
+  T1572: true   # Protocol Tunneling
+  T1105: true   # Ingress Tool Transfer
+
+  # Exfiltration
+  T1048: true   # Exfiltration Over Alternative Protocol
+  T1041: true   # Exfiltration Over C2 Channel
+
+  # Impact
+  T1489: true   # Service Stop
+  T1529: true   # System Shutdown/Reboot

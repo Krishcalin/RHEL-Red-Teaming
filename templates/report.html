@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RHEL Red Team Scan Report — {{ scan.scan_id }}</title>
+    <style>
+        :root {
+            --bg: #1a1a2e;
+            --surface: #16213e;
+            --card: #0f3460;
+            --text: #e4e4e4;
+            --muted: #a0a0a0;
+            --red: #e94560;
+            --green: #4ecca3;
+            --yellow: #f0c040;
+            --orange: #ff8c42;
+            --blue: #3a86ff;
+            --border: #2a2a4a;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        header { text-align: center; padding: 2rem 0; border-bottom: 2px solid var(--red); margin-bottom: 2rem; }
+        header h1 { font-size: 1.8rem; color: var(--red); }
+        header p { color: var(--muted); margin-top: 0.5rem; }
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .summary-card { background: var(--surface); border-radius: 8px; padding: 1.5rem; text-align: center; border: 1px solid var(--border); }
+        .summary-card .value { font-size: 2.5rem; font-weight: bold; }
+        .summary-card .label { color: var(--muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; }
+        .vuln { color: var(--red); }
+        .secure { color: var(--green); }
+        .warn { color: var(--yellow); }
+        .skip { color: var(--muted); }
+        .tactic-section { margin-bottom: 2rem; }
+        .tactic-section h2 { color: var(--blue); font-size: 1.3rem; padding: 0.8rem 1rem; background: var(--surface); border-left: 4px solid var(--blue); border-radius: 0 8px 8px 0; margin-bottom: 1rem; }
+        table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: 8px; overflow: hidden; margin-bottom: 1rem; }
+        th { background: var(--card); padding: 0.8rem 1rem; text-align: left; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); }
+        td { padding: 0.8rem 1rem; border-top: 1px solid var(--border); }
+        tr:hover td { background: rgba(255,255,255,0.03); }
+        .badge { padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; }
+        .badge-vulnerable { background: rgba(233,69,96,0.2); color: var(--red); }
+        .badge-secure { background: rgba(78,204,163,0.2); color: var(--green); }
+        .badge-error { background: rgba(240,192,64,0.2); color: var(--yellow); }
+        .badge-skipped { background: rgba(160,160,160,0.15); color: var(--muted); }
+        .badge-critical { background: rgba(233,69,96,0.3); color: #ff4d6d; }
+        .badge-high { background: rgba(233,69,96,0.2); color: var(--red); }
+        .badge-medium { background: rgba(255,140,66,0.2); color: var(--orange); }
+        .badge-low { background: rgba(58,134,255,0.2); color: var(--blue); }
+        .badge-info { background: rgba(160,160,160,0.15); color: var(--muted); }
+        .findings-list { margin-top: 0.5rem; }
+        .finding { background: var(--card); border-radius: 6px; padding: 1rem; margin-bottom: 0.5rem; border-left: 3px solid var(--orange); }
+        .finding h4 { margin-bottom: 0.3rem; }
+        .finding p { color: var(--muted); font-size: 0.9rem; }
+        .finding .evidence { background: rgba(0,0,0,0.3); padding: 0.5rem; border-radius: 4px; font-family: monospace; font-size: 0.8rem; margin-top: 0.5rem; white-space: pre-wrap; word-break: break-all; }
+        .finding .remediation { color: var(--green); font-size: 0.85rem; margin-top: 0.3rem; }
+        footer { text-align: center; padding: 2rem 0; color: var(--muted); font-size: 0.8rem; border-top: 1px solid var(--border); margin-top: 2rem; }
+        details { margin-top: 0.5rem; }
+        details summary { cursor: pointer; color: var(--blue); font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>RHEL Red Team Scan Report</h1>
+            <p>Scan ID: {{ scan.scan_id }} | Generated: {{ generated_at }}</p>
+        </header>
+
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="value">{{ summary.total }}</div>
+                <div class="label">Total Checks</div>
+            </div>
+            <div class="summary-card">
+                <div class="value vuln">{{ summary.vulnerable }}</div>
+                <div class="label">Vulnerable</div>
+            </div>
+            <div class="summary-card">
+                <div class="value secure">{{ summary.secure }}</div>
+                <div class="label">Secure</div>
+            </div>
+            <div class="summary-card">
+                <div class="value warn">{{ summary.errors }}</div>
+                <div class="label">Errors</div>
+            </div>
+            <div class="summary-card">
+                <div class="value skip">{{ summary.skipped }}</div>
+                <div class="label">Skipped</div>
+            </div>
+        </div>
+
+        {% for tactic_name, results in by_tactic.items() %}
+        <div class="tactic-section">
+            <h2>{{ tactic_name }}</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Technique</th>
+                        <th>Name</th>
+                        <th>Status</th>
+                        <th>Severity</th>
+                        <th>Findings</th>
+                        <th>Duration</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in results %}
+                    <tr>
+                        <td><strong>{{ r.technique_id }}</strong></td>
+                        <td>{{ r.technique_name }}</td>
+                        <td><span class="badge badge-{{ r.status.value }}">{{ r.status.value }}</span></td>
+                        <td><span class="badge badge-{{ r.max_severity.value }}">{{ r.max_severity.value }}</span></td>
+                        <td>{{ r.finding_count }}</td>
+                        <td>{{ "%.1f"|format(r.duration_seconds) }}s</td>
+                    </tr>
+                    {% if r.findings %}
+                    <tr>
+                        <td colspan="6">
+                            <details>
+                                <summary>View {{ r.finding_count }} finding(s)</summary>
+                                <div class="findings-list">
+                                    {% for f in r.findings %}
+                                    <div class="finding">
+                                        <h4><span class="badge badge-{{ f.severity.value }}">{{ f.severity.value }}</span> {{ f.title }}</h4>
+                                        <p>{{ f.description }}</p>
+                                        {% if f.evidence %}
+                                        <div class="evidence">{{ f.evidence }}</div>
+                                        {% endif %}
+                                        {% if f.remediation %}
+                                        <p class="remediation">Remediation: {{ f.remediation }}</p>
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </details>
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endfor %}
+
+        <footer>
+            <p>RHEL Red Teaming Tool &mdash; MITRE ATT&amp;CK Security Scanner</p>
+            <p>Report generated at {{ generated_at }}</p>
+        </footer>
+    </div>
+</body>
+</html>

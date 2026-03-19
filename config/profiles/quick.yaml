@@ -1,0 +1,11 @@
+# Quick Scan Profile — Fast, high-priority checks only
+name: quick
+description: Fast scan covering the most critical security checks
+
+tactics:
+  - discovery
+  - credential_access
+  - privilege_escalation
+
+timeout: 120
+parallel: false

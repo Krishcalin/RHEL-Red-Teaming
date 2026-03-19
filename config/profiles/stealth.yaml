@@ -1,0 +1,10 @@
+# Stealth Scan Profile — Low-noise, passive checks only
+name: stealth
+description: Low-noise scan using only passive, read-only checks
+
+tactics:
+  - discovery
+  - credential_access
+
+timeout: 300
+parallel: false

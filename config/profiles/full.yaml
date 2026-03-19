@@ -1,0 +1,8 @@
+# Full Scan Profile — All modules, all tactics
+name: full
+description: Comprehensive scan across all MITRE ATT&CK tactics
+
+tactics: null  # null = all tactics
+
+timeout: 600
+parallel: false

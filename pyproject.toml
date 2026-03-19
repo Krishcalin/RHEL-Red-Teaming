@@ -1,0 +1,63 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "rhel-red-teaming"
+version = "0.1.0"
+description = "MITRE ATT&CK-aligned red team security testing tool for RHEL"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [{name = "Krishcalin"}]
+keywords = ["security", "red-team", "mitre-attack", "rhel", "penetration-testing"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+]
+dependencies = [
+    "paramiko>=3.0",
+    "mitreattack-python",
+    "click>=8.0",
+    "pyyaml>=6.0",
+    "jinja2>=3.1",
+    "rich>=13.0",
+    "structlog>=23.0",
+    "cryptography>=41.0",
+    "python-nmap>=0.7",
+    "psutil>=5.9",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov",
+    "pytest-asyncio",
+    "ruff",
+    "mypy",
+]
+
+[project.scripts]
+rhel-rt = "main:cli"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true

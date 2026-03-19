@@ -1,0 +1,27 @@
+# RHEL Red Teaming Tool — Global Settings
+# WARNING: Targets must be explicitly whitelisted before scanning.
+
+targets:
+  - host: localhost
+    session_type: local
+
+  # Example remote target (uncomment and configure):
+  # - host: 192.168.1.20
+  #   port: 22
+  #   username: redteam
+  #   key_file: ~/.ssh/id_rsa
+  #   session_type: ssh
+
+scan:
+  profile: quick
+  simulate: false
+  timeout: 300
+  parallel: false
+  max_workers: 4
+
+output:
+  report_dir: reports
+  evidence_dir: evidence
+  log_file: reports/scan.log
+  log_level: INFO
+  json_logging: false
