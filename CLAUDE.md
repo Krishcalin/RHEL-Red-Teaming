@@ -10,7 +10,7 @@ security controls across RHEL 8 and RHEL 9.
 **License**: MIT
 **Python**: 3.10+
 **ATT&CK Matrix**: https://attack.mitre.org/matrices/enterprise/linux/
-**Current Phase**: Phase 5 (Execution & Persistence) — Complete
+**Current Phase**: Phase 6 (Defense Evasion) — Complete
 
 ---
 
@@ -556,31 +556,30 @@ Required class attributes: `TECHNIQUE_ID`, `TECHNIQUE_NAME`, `TACTIC`, `SEVERITY
 - [x] T1176 Software Extensions (browser, IDE, GNOME, sudo plugins)
 - [x] T1205 Traffic Signaling (knockd, fwknop, BPF, raw sockets, capabilities)
 
-### Phase 6 — Defense Evasion (26 techniques)
-- [ ] T1562 Impair Defenses (SELinux, auditd, firewall, history, audit system)
-- [ ] T1070 Indicator Removal (logs, history, files, timestamps)
-- [ ] T1036 Masquerading (rename, process trees, file type, args)
-- [ ] T1027 Obfuscated Files (packing, encoding, fileless)
-- [ ] T1222 File Permissions Modification
-- [ ] T1564 Hide Artifacts (hidden files, bind mounts, xattrs, VMs)
-- [ ] T1574 Hijack Execution Flow
-- [ ] T1055 Process Injection
-- [ ] T1556 Modify Auth Process
-- [ ] T1014 Rootkit detection
-- [ ] T1553 Subvert Trust Controls (root certs)
-- [ ] T1620 Reflective Code Loading
-- [ ] T1542 Pre-OS Boot
-- [ ] T1218 System Binary Proxy Execution
-- [ ] T1205 Traffic Signaling
-- [ ] T1078 Valid Accounts
-- [ ] T1497 Virtualization/Sandbox Evasion
-- [ ] T1622 Debugger Evasion
-- [ ] T1678 Delay Execution
-- [ ] T1140 Deobfuscate/Decode Files
-- [ ] T1480 Execution Guardrails
-- [ ] T1211 Exploitation for Defense Evasion
-- [ ] T1656 Impersonation
-- [ ] T1672 Email Spoofing
+### Phase 6 — Defense Evasion (23 techniques) (COMPLETE)
+- [x] T1562 Impair Defenses (SELinux, auditd, firewall, history, audit system)
+- [x] T1070 Indicator Removal (logs, history, files, timestamps, journal)
+- [x] T1036 Masquerading (rename, process trees, cmdline/exe mismatch)
+- [x] T1027 Obfuscated Files (UPX packing, compile-after-delivery, base64, fileless)
+- [x] T1222 File Permissions Modification (SUID/SGID, umask, ACLs, capabilities)
+- [x] T1564 Hide Artifacts (hidden files, loop mounts, VMs, containers, bind mounts, xattrs)
+- [x] T1055 Process Injection (ptrace, /proc/mem, vDSO, CAP_SYS_PTRACE, SELinux)
+- [x] T1014 Rootkit detection (rkhunter, hidden modules/processes/connections, rpm -Va)
+- [x] T1553 Subvert Trust Controls (CA certs, custom anchors, RPM integrity)
+- [x] T1620 Reflective Code Loading (memfd_create, /dev/shm exec, deleted exe)
+- [x] T1218 System Binary Proxy Execution (Electron, GTFOBins, SUID, capabilities)
+- [x] T1497 Virtualization/Sandbox Evasion (detect-virt, DMI, VM modules, NTP)
+- [x] T1622 Debugger Evasion (gdb/strace, ptrace, core dumps, perf)
+- [x] T1678 Delay Execution (at jobs, @reboot+sleep, systemd timer delays)
+- [x] T1140 Deobfuscate/Decode Files (base64, xxd, openssl, decode history)
+- [x] T1480 Execution Guardrails (hostname keying, lock files, flock, env gating)
+- [x] T1574 Hijack Execution Flow — evasion (LD_DEBUG, preload interception, RPATH)
+- [x] T1556 Modify Auth Process — evasion (PAM logging, faillock, pam_permit bypass)
+- [x] T1542 Pre-OS Boot — evasion (Secure Boot bypass, unsigned modules, GRUB)
+- [x] T1205 Traffic Signaling — evasion (covert firewall rules, VPN tunnels, BPF)
+- [x] T1078 Valid Accounts — evasion (default accounts, off-hours login, shared UIDs)
+- [x] T1211 Exploitation for Defense Evasion (kernel CVEs, outdated security packages)
+- [x] T1656 Impersonation (user namespaces, sudo logging, symlink protection, TIOCSTI)
 
 ### Phase 7 — Lateral Movement, C2, Exfiltration & Collection (48 techniques)
 - [ ] T1021 Remote Services (SSH, VNC)

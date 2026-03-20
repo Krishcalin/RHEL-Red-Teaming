@@ -25,7 +25,7 @@ RHEL-RT is a security validation and verification tool that systematically tests
 
 ### Key Features
 
-- **180 techniques planned, 77 modules implemented** covering Discovery, Credential Access, Privilege Escalation, Execution, Persistence
+- **180 techniques planned, 100 modules implemented** covering Discovery, Credential Access, Privilege Escalation, Execution, Persistence, Defense Evasion
 - **Safe by default** — passive, read-only checks; active simulation requires explicit `--simulate` flag
 - **ATT&CK Navigator export** — JSON layers for visual heatmap analysis
 - **Multi-format reporting** — HTML (dark-themed), JSON, CSV
@@ -251,13 +251,13 @@ Machine-readable output for integration with SIEM, ticketing, or CI/CD pipelines
 | 3 | Credential Access (15 techniques) | 14 | Done |
 | 4 | Privilege Escalation (12 techniques) | 12 | Done |
 | 5 | Execution & Persistence (25 techniques) | 25 | Done |
-| 6 | Defense Evasion (26 techniques) | — | Planned |
+| 6 | Defense Evasion (23 techniques) | 23 | Done |
 | 7 | Lateral Movement, C2, Exfiltration & Collection | — | Planned |
 | 8 | Impact (15 techniques) | — | Planned |
 | 9 | Reporting & ATT&CK Integration | — | Planned |
 | 10 | Testing & Hardening | — | Planned |
 
-**Current: 77 technique modules implemented across 6 tactics.**
+**Current: 100 technique modules implemented across 7 tactics.**
 
 ---
 
