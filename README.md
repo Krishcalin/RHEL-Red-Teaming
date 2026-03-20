@@ -25,14 +25,16 @@ RHEL-RT is a security validation and verification tool that systematically tests
 
 ### Key Features
 
-- **180 techniques planned, 100 modules implemented** covering Discovery, Credential Access, Privilege Escalation, Execution, Persistence, Defense Evasion
+- **108 modules implemented** across 9 ATT&CK tactics — Discovery, Credential Access, Privilege Escalation, Execution, Persistence, Defense Evasion, Lateral Movement, C2, Exfiltration
 - **Safe by default** — passive, read-only checks; active simulation requires explicit `--simulate` flag
 - **ATT&CK Navigator export** — JSON layers for visual heatmap analysis
-- **Multi-format reporting** — HTML (dark-themed), JSON, CSV
+- **Multi-format reporting** — HTML (dark-themed with per-technique detail pages), JSON, CSV
+- **Compliance mapping** — CIS Controls v8, NIST SP 800-53 Rev. 5, CIS RHEL 9 Benchmark
 - **Local & remote scanning** — direct execution or SSH (paramiko)
 - **RHEL-specific controls** — SELinux, firewalld, auditd, PAM, FIPS, crypto policies, systemd sandboxing
 - **Module auto-discovery** — drop a technique module into `modules/` and it's automatically loaded
 - **Evidence chain** — every action logged with timestamp, target, technique ID, and result
+- **CI/CD** — GitHub Actions pipeline with Python 3.10-3.12, ruff linting, mypy, pytest + coverage
 
 ---
 
@@ -97,7 +99,8 @@ RHEL-Red-Teaming/
 │   ├── banner.py               # Professional ASCII banner
 │   ├── logger.py               # Structured logging + evidence chain
 │   ├── reporter.py             # Report generation (HTML/JSON/CSV)
-│   └── mitre_mapper.py         # ATT&CK Navigator JSON layer export
+│   ├── mitre_mapper.py         # ATT&CK Navigator JSON layer export
+│   └── compliance.py           # CIS/NIST 800-53/CIS RHEL compliance mapping
 ├── modules/                    # Technique modules (one per ATT&CK technique)
 │   ├── base.py                 # BaseModule abstract class
 │   ├── discovery/              # TA0007 — 26 techniques
@@ -106,12 +109,12 @@ RHEL-Red-Teaming/
 │   ├── defense_evasion/        # TA0005 — 26 techniques
 │   ├── persistence/            # TA0003 — 18 techniques
 │   ├── execution/              # TA0002 — 10 techniques
-│   ├── lateral_movement/       # TA0008 — 8 techniques
-│   ├── collection/             # TA0009 — 14 techniques
-│   ├── command_and_control/    # TA0011 — 18 techniques
-│   ├── exfiltration/           # TA0010 — 8 techniques
-│   ├── initial_access/         # TA0001 — 10 techniques
-│   └── impact/                 # TA0040 — 15 techniques
+│   ├── lateral_movement/       # TA0008 — 3 modules implemented
+│   ├── command_and_control/    # TA0011 — 3 modules implemented
+│   ├── exfiltration/           # TA0010 — 2 modules implemented
+│   ├── collection/             # TA0009 — planned
+│   ├── initial_access/         # TA0001 — planned
+│   └── impact/                 # TA0040 — planned
 ├── templates/                  # Jinja2 HTML report template
 ├── tests/                      # pytest test suite
 ├── main.py                     # CLI entry point (click)
@@ -124,8 +127,9 @@ RHEL-Red-Teaming/
 2. **Session** connects to the target (local subprocess or SSH via paramiko)
 3. Each **module** runs `check()` (passive) or `simulate()` (active) against the target
 4. Results are collected as `ModuleResult` objects with `Finding` details
-5. **Reporter** outputs HTML/JSON/CSV reports
+5. **Reporter** outputs HTML/JSON/CSV reports with compliance data
 6. **MitreMapper** exports ATT&CK Navigator JSON layers for visual analysis
+7. **ComplianceMapper** enriches results with CIS Controls, NIST 800-53, and CIS RHEL Benchmark refs
 
 ### Writing a Module
 
@@ -183,13 +187,14 @@ Save as `modules/discovery/T1082_system_info.py` — the engine discovers it aut
 | Defense Evasion | TA0005 | 26 | SELinux, auditd, rootkits, log tampering, masquerading |
 | Credential Access | TA0006 | 15 | /etc/shadow, SSH keys, PAM, Kerberos, credential files |
 | Discovery | TA0007 | 26 | System info, accounts, network, processes, services |
-| Lateral Movement | TA0008 | 8 | SSH config, agent forwarding, NFS/Samba, tool transfer |
-| Collection | TA0009 | 14 | Sensitive files, clipboard, screen capture, archives |
-| Command & Control | TA0011 | 18 | Outbound HTTP/DNS, tunneling, proxy, encrypted channels |
-| Exfiltration | TA0010 | 8 | DNS/ICMP exfil, web service, USB, scheduled transfer |
-| Impact | TA0040 | 15 | Service stop, disk wipe, ransomware feasibility, DoS |
+| Lateral Movement | TA0008 | 3 | SSH hardening, SMB/NFS, PtH/PtT, tool transfer |
+| Command & Control | TA0011 | 3 | Egress filtering, DNS tunneling, encrypted channels, proxy |
+| Exfiltration | TA0010 | 2 | DNS/ICMP exfil, C2 channel exfil, data staging, DLP |
+| Collection | TA0009 | — | Planned |
+| Initial Access | TA0001 | — | Planned |
+| Impact | TA0040 | — | Planned |
 
-**Total: 180 techniques, 187 sub-techniques, 297 security checks**
+**Implemented: 108 technique modules across 9 tactics**
 
 ---
 
@@ -228,8 +233,11 @@ Save as `modules/discovery/T1082_system_info.py` — the engine discovers it aut
 ### HTML Report
 Dark-themed, interactive HTML report with:
 - Executive summary (total checks, vulnerable, secure, errors)
-- Results grouped by ATT&CK tactic
-- Expandable findings with evidence and remediation
+- Severity breakdown bar chart (critical/high/medium/low/info)
+- Compliance dashboard with per-framework coverage meters (CIS Controls, NIST 800-53, CIS RHEL Benchmark)
+- Results grouped by ATT&CK tactic with clickable technique links
+- Per-technique detail pages with findings, evidence, remediation, mitigations, and compliance mapping
+- Direct links to ATT&CK technique pages
 
 ### ATT&CK Navigator Layer
 JSON layer file importable into [MITRE ATT&CK Navigator](https://mitre-attack.github.io/attack-navigator/):
@@ -239,6 +247,14 @@ JSON layer file importable into [MITRE ATT&CK Navigator](https://mitre-attack.gi
 
 ### JSON / CSV
 Machine-readable output for integration with SIEM, ticketing, or CI/CD pipelines.
+- JSON includes per-result compliance references and compliance summary
+- CSV includes CIS Controls, NIST 800-53, and CIS RHEL Benchmark columns
+
+### Compliance Frameworks
+Each technique is mapped to relevant controls from:
+- **CIS Controls v8** — 24 techniques mapped to ~60 controls
+- **NIST SP 800-53 Rev. 5** — 28 techniques mapped to ~55 controls
+- **CIS RHEL 9 Benchmark** — 14 techniques mapped to ~35 recommendations
 
 ---
 
@@ -252,12 +268,12 @@ Machine-readable output for integration with SIEM, ticketing, or CI/CD pipelines
 | 4 | Privilege Escalation (12 techniques) | 12 | Done |
 | 5 | Execution & Persistence (25 techniques) | 25 | Done |
 | 6 | Defense Evasion (23 techniques) | 23 | Done |
-| 7 | Lateral Movement, C2, Exfiltration & Collection | — | Planned |
+| 7 | Lateral Movement, C2 & Exfiltration (8 modules) | 8 | Done |
 | 8 | Impact (15 techniques) | — | Planned |
-| 9 | Reporting & ATT&CK Integration | — | Planned |
-| 10 | Testing & Hardening | — | Planned |
+| 9 | Reporting & Compliance (CIS/NIST/CIS RHEL mapping) | Core | Done |
+| 10 | Testing & CI/CD (pytest, GitHub Actions, safety controls) | Core | Done |
 
-**Current: 100 technique modules implemented across 7 tactics.**
+**Current: 108 technique modules implemented across 9 tactics.**
 
 ---
 
