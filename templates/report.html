@@ -16,14 +16,27 @@
             --yellow: #f0c040;
             --orange: #ff8c42;
             --blue: #3a86ff;
+            --purple: #9d4edd;
             --border: #2a2a4a;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .container { max-width: 1300px; margin: 0 auto; padding: 2rem; }
+        a { color: var(--blue); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        /* Header */
         header { text-align: center; padding: 2rem 0; border-bottom: 2px solid var(--red); margin-bottom: 2rem; }
         header h1 { font-size: 1.8rem; color: var(--red); }
         header p { color: var(--muted); margin-top: 0.5rem; }
+
+        /* Navigation */
+        .nav { background: var(--surface); border-radius: 8px; padding: 1rem; margin-bottom: 2rem; display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; border: 1px solid var(--border); }
+        .nav a { padding: 0.4rem 0.8rem; border-radius: 4px; font-size: 0.85rem; transition: background 0.2s; }
+        .nav a:hover { background: var(--card); text-decoration: none; }
+        .nav .nav-label { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Summary Cards */
         .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
         .summary-card { background: var(--surface); border-radius: 8px; padding: 1.5rem; text-align: center; border: 1px solid var(--border); }
         .summary-card .value { font-size: 2.5rem; font-weight: bold; }
@@ -32,65 +45,205 @@
         .secure { color: var(--green); }
         .warn { color: var(--yellow); }
         .skip { color: var(--muted); }
+
+        /* Risk Matrix */
+        .risk-matrix { background: var(--surface); border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem; border: 1px solid var(--border); }
+        .risk-matrix h2 { color: var(--blue); font-size: 1.2rem; margin-bottom: 1rem; }
+        .risk-bars { display: flex; gap: 1rem; align-items: flex-end; height: 120px; }
+        .risk-bar { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
+        .risk-bar .bar { width: 100%; border-radius: 4px 4px 0 0; min-height: 4px; transition: height 0.3s; }
+        .risk-bar .bar-label { font-size: 0.75rem; color: var(--muted); margin-top: 0.5rem; text-transform: uppercase; }
+        .risk-bar .bar-count { font-size: 1.2rem; font-weight: bold; margin-bottom: 0.3rem; }
+
+        /* Compliance Summary */
+        .compliance-section { background: var(--surface); border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem; border: 1px solid var(--border); }
+        .compliance-section h2 { color: var(--purple); font-size: 1.2rem; margin-bottom: 1rem; }
+        .compliance-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+        .compliance-card { background: var(--card); border-radius: 8px; padding: 1.2rem; }
+        .compliance-card h3 { font-size: 0.95rem; margin-bottom: 0.8rem; color: var(--text); }
+        .compliance-meter { height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; margin-bottom: 0.5rem; }
+        .compliance-meter .fill { height: 100%; border-radius: 4px; }
+        .compliance-stats { font-size: 0.8rem; color: var(--muted); display: flex; justify-content: space-between; }
+
+        /* Tables */
         .tactic-section { margin-bottom: 2rem; }
         .tactic-section h2 { color: var(--blue); font-size: 1.3rem; padding: 0.8rem 1rem; background: var(--surface); border-left: 4px solid var(--blue); border-radius: 0 8px 8px 0; margin-bottom: 1rem; }
         table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: 8px; overflow: hidden; margin-bottom: 1rem; }
         th { background: var(--card); padding: 0.8rem 1rem; text-align: left; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); }
         td { padding: 0.8rem 1rem; border-top: 1px solid var(--border); }
         tr:hover td { background: rgba(255,255,255,0.03); }
-        .badge { padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; }
+
+        /* Badges */
+        .badge { padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; display: inline-block; }
         .badge-vulnerable { background: rgba(233,69,96,0.2); color: var(--red); }
+        .badge-not_vulnerable { background: rgba(78,204,163,0.2); color: var(--green); }
         .badge-secure { background: rgba(78,204,163,0.2); color: var(--green); }
         .badge-error { background: rgba(240,192,64,0.2); color: var(--yellow); }
         .badge-skipped { background: rgba(160,160,160,0.15); color: var(--muted); }
+        .badge-partial { background: rgba(255,140,66,0.2); color: var(--orange); }
         .badge-critical { background: rgba(233,69,96,0.3); color: #ff4d6d; }
         .badge-high { background: rgba(233,69,96,0.2); color: var(--red); }
         .badge-medium { background: rgba(255,140,66,0.2); color: var(--orange); }
         .badge-low { background: rgba(58,134,255,0.2); color: var(--blue); }
         .badge-info { background: rgba(160,160,160,0.15); color: var(--muted); }
-        .findings-list { margin-top: 0.5rem; }
-        .finding { background: var(--card); border-radius: 6px; padding: 1rem; margin-bottom: 0.5rem; border-left: 3px solid var(--orange); }
-        .finding h4 { margin-bottom: 0.3rem; }
+
+        /* Technique Detail */
+        .technique-detail { background: var(--card); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid var(--border); scroll-margin-top: 1rem; }
+        .technique-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+        .technique-header h3 { font-size: 1.1rem; }
+        .technique-header .technique-id { color: var(--blue); font-weight: bold; font-size: 1.1rem; }
+        .technique-meta { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+        /* Findings */
+        .findings-list { margin-top: 1rem; }
+        .finding { background: rgba(0,0,0,0.2); border-radius: 6px; padding: 1rem; margin-bottom: 0.5rem; border-left: 3px solid var(--orange); }
+        .finding h4 { margin-bottom: 0.3rem; font-size: 0.95rem; }
         .finding p { color: var(--muted); font-size: 0.9rem; }
         .finding .evidence { background: rgba(0,0,0,0.3); padding: 0.5rem; border-radius: 4px; font-family: monospace; font-size: 0.8rem; margin-top: 0.5rem; white-space: pre-wrap; word-break: break-all; }
         .finding .remediation { color: var(--green); font-size: 0.85rem; margin-top: 0.3rem; }
-        footer { text-align: center; padding: 2rem 0; color: var(--muted); font-size: 0.8rem; border-top: 1px solid var(--border); margin-top: 2rem; }
+        .finding-critical { border-left-color: #ff4d6d; }
+        .finding-high { border-left-color: var(--red); }
+        .finding-medium { border-left-color: var(--orange); }
+        .finding-low { border-left-color: var(--blue); }
+        .finding-info { border-left-color: var(--muted); }
+
+        /* Mitigations */
+        .mitigations { background: rgba(78,204,163,0.08); border-radius: 6px; padding: 1rem; margin-top: 1rem; border: 1px solid rgba(78,204,163,0.2); }
+        .mitigations h4 { color: var(--green); font-size: 0.9rem; margin-bottom: 0.5rem; }
+        .mitigations ul { padding-left: 1.5rem; }
+        .mitigations li { color: var(--muted); font-size: 0.85rem; margin-bottom: 0.3rem; }
+
+        /* Compliance Refs */
+        .compliance-refs { background: rgba(157,78,221,0.08); border-radius: 6px; padding: 1rem; margin-top: 1rem; border: 1px solid rgba(157,78,221,0.2); }
+        .compliance-refs h4 { color: var(--purple); font-size: 0.9rem; margin-bottom: 0.5rem; }
+        .compliance-ref-group { margin-bottom: 0.5rem; }
+        .compliance-ref-group .fw-name { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.3rem; }
+        .ref-tag { display: inline-block; background: rgba(157,78,221,0.15); padding: 0.2rem 0.5rem; border-radius: 3px; font-size: 0.75rem; margin: 0.1rem; color: var(--purple); }
+
+        /* Collapsible */
         details { margin-top: 0.5rem; }
-        details summary { cursor: pointer; color: var(--blue); font-size: 0.85rem; }
+        details summary { cursor: pointer; color: var(--blue); font-size: 0.85rem; padding: 0.3rem 0; user-select: none; }
+        details summary:hover { text-decoration: underline; }
+
+        /* Footer */
+        footer { text-align: center; padding: 2rem 0; color: var(--muted); font-size: 0.8rem; border-top: 1px solid var(--border); margin-top: 2rem; }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- Header -->
         <header>
             <h1>RHEL Red Team Scan Report</h1>
             <p>Scan ID: {{ scan.scan_id }} | Generated: {{ generated_at }}</p>
+            {% if scan.target_info %}
+            <p>{{ scan.target_info.get('PRETTY_NAME', '') }} | {{ scan.target_info.get('hostname', '') }} | Kernel {{ scan.target_info.get('kernel', '') }}</p>
+            {% endif %}
         </header>
 
-        <div class="summary-grid">
-            <div class="summary-card">
-                <div class="value">{{ summary.total }}</div>
-                <div class="label">Total Checks</div>
-            </div>
-            <div class="summary-card">
-                <div class="value vuln">{{ summary.vulnerable }}</div>
-                <div class="label">Vulnerable</div>
-            </div>
-            <div class="summary-card">
-                <div class="value secure">{{ summary.secure }}</div>
-                <div class="label">Secure</div>
-            </div>
-            <div class="summary-card">
-                <div class="value warn">{{ summary.errors }}</div>
-                <div class="label">Errors</div>
-            </div>
-            <div class="summary-card">
-                <div class="value skip">{{ summary.skipped }}</div>
-                <div class="label">Skipped</div>
+        <!-- Navigation -->
+        <nav class="nav">
+            <span class="nav-label">Jump to:</span>
+            <a href="#executive-summary">Executive Summary</a>
+            <a href="#risk-matrix">Risk Matrix</a>
+            <a href="#compliance">Compliance</a>
+            {% for tactic_name in by_tactic.keys() %}
+            <a href="#tactic-{{ tactic_name | lower | replace(' ', '-') }}">{{ tactic_name }}</a>
+            {% endfor %}
+            <a href="#technique-details">Technique Details</a>
+        </nav>
+
+        <!-- Executive Summary -->
+        <div id="executive-summary">
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <div class="value">{{ summary.total }}</div>
+                    <div class="label">Total Checks</div>
+                </div>
+                <div class="summary-card">
+                    <div class="value vuln">{{ summary.vulnerable }}</div>
+                    <div class="label">Vulnerable</div>
+                </div>
+                <div class="summary-card">
+                    <div class="value secure">{{ summary.secure }}</div>
+                    <div class="label">Secure</div>
+                </div>
+                <div class="summary-card">
+                    <div class="value warn">{{ summary.errors }}</div>
+                    <div class="label">Errors</div>
+                </div>
+                <div class="summary-card">
+                    <div class="value skip">{{ summary.skipped }}</div>
+                    <div class="label">Skipped</div>
+                </div>
             </div>
         </div>
 
+        <!-- Risk Matrix -->
+        <div class="risk-matrix" id="risk-matrix">
+            <h2>Severity Breakdown</h2>
+            {% if severity_counts %}
+            <div class="risk-bars">
+                {% set max_count = [severity_counts.get('critical', 0), severity_counts.get('high', 0), severity_counts.get('medium', 0), severity_counts.get('low', 0), severity_counts.get('info', 0)] | max %}
+                {% set bar_max = max_count if max_count > 0 else 1 %}
+                <div class="risk-bar">
+                    <div class="bar-count" style="color: #ff4d6d;">{{ severity_counts.get('critical', 0) }}</div>
+                    <div class="bar" style="background: #ff4d6d; height: {{ (severity_counts.get('critical', 0) / bar_max * 100) | int }}px;"></div>
+                    <div class="bar-label">Critical</div>
+                </div>
+                <div class="risk-bar">
+                    <div class="bar-count" style="color: var(--red);">{{ severity_counts.get('high', 0) }}</div>
+                    <div class="bar" style="background: var(--red); height: {{ (severity_counts.get('high', 0) / bar_max * 100) | int }}px;"></div>
+                    <div class="bar-label">High</div>
+                </div>
+                <div class="risk-bar">
+                    <div class="bar-count" style="color: var(--orange);">{{ severity_counts.get('medium', 0) }}</div>
+                    <div class="bar" style="background: var(--orange); height: {{ (severity_counts.get('medium', 0) / bar_max * 100) | int }}px;"></div>
+                    <div class="bar-label">Medium</div>
+                </div>
+                <div class="risk-bar">
+                    <div class="bar-count" style="color: var(--blue);">{{ severity_counts.get('low', 0) }}</div>
+                    <div class="bar" style="background: var(--blue); height: {{ (severity_counts.get('low', 0) / bar_max * 100) | int }}px;"></div>
+                    <div class="bar-label">Low</div>
+                </div>
+                <div class="risk-bar">
+                    <div class="bar-count" style="color: var(--muted);">{{ severity_counts.get('info', 0) }}</div>
+                    <div class="bar" style="background: var(--muted); height: {{ (severity_counts.get('info', 0) / bar_max * 100) | int }}px;"></div>
+                    <div class="bar-label">Info</div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Compliance Summary -->
+        {% if compliance_summary %}
+        <div class="compliance-section" id="compliance">
+            <h2>Compliance Framework Coverage</h2>
+            <div class="compliance-grid">
+                {% for fw, stats in compliance_summary.items() %}
+                <div class="compliance-card">
+                    <h3>{{ fw }}</h3>
+                    {% set pct = ((stats.compliant / stats.total * 100) | int) if stats.total > 0 else 0 %}
+                    <div class="compliance-meter">
+                        <div class="fill" style="width: {{ pct }}%; background: {% if pct >= 80 %}var(--green){% elif pct >= 50 %}var(--yellow){% else %}var(--red){% endif %};"></div>
+                    </div>
+                    <div class="compliance-stats">
+                        <span>{{ stats.compliant }} / {{ stats.total }} controls met</span>
+                        <span>{{ pct }}%</span>
+                    </div>
+                    {% if stats.violated > 0 %}
+                    <div style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--red);">
+                        {{ stats.violated }} control(s) with findings
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Tactic Overview Tables -->
         {% for tactic_name, results in by_tactic.items() %}
-        <div class="tactic-section">
+        <div class="tactic-section" id="tactic-{{ tactic_name | lower | replace(' ', '-') }}">
             <h2>{{ tactic_name }}</h2>
             <table>
                 <thead>
@@ -106,42 +259,99 @@
                 <tbody>
                     {% for r in results %}
                     <tr>
-                        <td><strong>{{ r.technique_id }}</strong></td>
+                        <td><a href="#detail-{{ r.technique_id }}"><strong>{{ r.technique_id }}</strong></a></td>
                         <td>{{ r.technique_name }}</td>
-                        <td><span class="badge badge-{{ r.status.value }}">{{ r.status.value }}</span></td>
+                        <td><span class="badge badge-{{ r.status.value }}">{{ r.status.value | replace('_', ' ') }}</span></td>
                         <td><span class="badge badge-{{ r.max_severity.value }}">{{ r.max_severity.value }}</span></td>
                         <td>{{ r.finding_count }}</td>
                         <td>{{ "%.1f"|format(r.duration_seconds) }}s</td>
                     </tr>
-                    {% if r.findings %}
-                    <tr>
-                        <td colspan="6">
-                            <details>
-                                <summary>View {{ r.finding_count }} finding(s)</summary>
-                                <div class="findings-list">
-                                    {% for f in r.findings %}
-                                    <div class="finding">
-                                        <h4><span class="badge badge-{{ f.severity.value }}">{{ f.severity.value }}</span> {{ f.title }}</h4>
-                                        <p>{{ f.description }}</p>
-                                        {% if f.evidence %}
-                                        <div class="evidence">{{ f.evidence }}</div>
-                                        {% endif %}
-                                        {% if f.remediation %}
-                                        <p class="remediation">Remediation: {{ f.remediation }}</p>
-                                        {% endif %}
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                            </details>
-                        </td>
-                    </tr>
-                    {% endif %}
                     {% endfor %}
                 </tbody>
             </table>
         </div>
         {% endfor %}
 
+        <!-- Per-Technique Detail Pages -->
+        <div id="technique-details">
+            <h2 style="color: var(--blue); font-size: 1.4rem; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border);">Technique Details</h2>
+
+            {% for item in enriched %}
+            {% set r = item.result %}
+            <div class="technique-detail" id="detail-{{ r.technique_id }}">
+                <div class="technique-header">
+                    <span class="technique-id">{{ r.technique_id }}</span>
+                    <h3>{{ r.technique_name }}</h3>
+                    <div class="technique-meta">
+                        <span class="badge badge-{{ r.status.value }}">{{ r.status.value | replace('_', ' ') }}</span>
+                        {% if r.is_vulnerable %}
+                        <span class="badge badge-{{ r.max_severity.value }}">{{ r.max_severity.value }}</span>
+                        {% endif %}
+                        <span class="badge" style="background: rgba(58,134,255,0.1); color: var(--blue);">{{ r.tactic.value | replace('_', ' ') | title }}</span>
+                    </div>
+                </div>
+
+                {% if r.error_message %}
+                <p style="color: var(--yellow); font-size: 0.9rem;">Error: {{ r.error_message }}</p>
+                {% endif %}
+
+                <!-- Findings -->
+                {% if r.findings %}
+                <div class="findings-list">
+                    {% for f in r.findings %}
+                    <div class="finding finding-{{ f.severity.value }}">
+                        <h4><span class="badge badge-{{ f.severity.value }}">{{ f.severity.value }}</span> {{ f.title }}</h4>
+                        <p>{{ f.description }}</p>
+                        {% if f.evidence %}
+                        <div class="evidence">{{ f.evidence }}</div>
+                        {% endif %}
+                        {% if f.remediation %}
+                        <p class="remediation">Remediation: {{ f.remediation }}</p>
+                        {% endif %}
+                        {% if f.references %}
+                        <p style="font-size: 0.8rem; color: var(--muted); margin-top: 0.3rem;">Refs: {{ f.references | join(', ') }}</p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Mitigations -->
+                {% if r.mitigations %}
+                <div class="mitigations">
+                    <h4>Recommended Mitigations</h4>
+                    <ul>
+                        {% for m in r.mitigations %}
+                        <li>{{ m }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <!-- Compliance References -->
+                {% if item.has_compliance %}
+                <div class="compliance-refs">
+                    <h4>Compliance Mapping</h4>
+                    {% for fw, refs in item.compliance.items() %}
+                    <div class="compliance-ref-group">
+                        <div class="fw-name">{{ fw }}</div>
+                        {% for ref in refs %}
+                        <span class="ref-tag" title="{{ ref.control_name }}">{{ ref.control_id }} — {{ ref.control_name }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div style="margin-top: 0.8rem; font-size: 0.8rem; color: var(--muted);">
+                    Duration: {{ "%.2f"|format(r.duration_seconds) }}s
+                    | <a href="https://attack.mitre.org/techniques/{{ r.technique_id | replace('.', '/') }}/" style="font-size: 0.8rem;">View on ATT&amp;CK</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Footer -->
         <footer>
             <p>RHEL Red Teaming Tool &mdash; MITRE ATT&amp;CK Security Scanner</p>
             <p>Report generated at {{ generated_at }}</p>
