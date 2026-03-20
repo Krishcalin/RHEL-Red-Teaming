@@ -10,7 +10,7 @@ security controls across RHEL 8 and RHEL 9.
 **License**: MIT
 **Python**: 3.10+
 **ATT&CK Matrix**: https://attack.mitre.org/matrices/enterprise/linux/
-**Current Phase**: Phase 4 (Privilege Escalation) — Complete
+**Current Phase**: Phase 5 (Execution & Persistence) — Complete
 
 ---
 
@@ -529,32 +529,32 @@ Required class attributes: `TECHNIQUE_ID`, `TECHNIQUE_NAME`, `TACTIC`, `SEVERITY
 - [x] T1098 Account Manipulation (authorized_keys, /etc/passwd, /etc/group)
 - [x] T1078 Valid Accounts (default accounts, empty passwords, expiry)
 
-### Phase 5 — Execution & Persistence (28 techniques)
-- [ ] T1059 Command and Scripting Interpreter (bash, python, JS, Lua)
-- [ ] T1053 Scheduled Tasks (cron, at, systemd timers)
-- [ ] T1543 Systemd Service persistence
-- [ ] T1546 Event Triggered Execution (all sub-techniques)
-- [ ] T1098 Account Manipulation (SSH keys, groups)
-- [ ] T1136 Create Account (local, domain)
-- [ ] T1574 Hijack Execution Flow (linker, PATH)
-- [ ] T1556 Modify Auth Process (PAM, MFA)
-- [ ] T1554 Compromise Host Software Binary
-- [ ] T1547 Boot/Logon Autostart (kernel modules, XDG)
-- [ ] T1037 Boot/Logon Init Scripts
-- [ ] T1668 Exclusive Control
-- [ ] T1653 Power Settings
-- [ ] T1542 Pre-OS Boot (firmware, bootkit)
-- [ ] T1505 Server Software Component (web shell, SQL)
-- [ ] T1176 Software Extensions (browser, IDE)
-- [ ] T1205 Traffic Signaling (port knocking, socket filters)
-- [ ] T1106 Native API
-- [ ] T1129 Shared Modules
-- [ ] T1072 Software Deployment Tools
-- [ ] T1569 System Services
-- [ ] T1204 User Execution
-- [ ] T1203 Exploitation for Client Execution
-- [ ] T1674 Input Injection
-- [ ] T1559 Inter-Process Communication
+### Phase 5 — Execution & Persistence (25 techniques) (COMPLETE)
+- [x] T1059 Command and Scripting Interpreter (bash, python, JS, Lua)
+- [x] T1053 Scheduled Tasks (cron, at, systemd timers)
+- [x] T1106 Native API (ptrace, seccomp, eBPF, kptr)
+- [x] T1129 Shared Modules (LD_PRELOAD, ld.so.preload, library paths)
+- [x] T1072 Software Deployment Tools (Ansible, Puppet, Chef, Salt, gpgcheck)
+- [x] T1569 System Services (polkit, sandboxing, unit permissions)
+- [x] T1204 User Execution (noexec, world-writable, download-execute)
+- [x] T1203 Exploitation for Client Execution (ASLR, NX, PIE, RELRO, canaries)
+- [x] T1674 Input Injection (X11, xdotool, Wayland, /dev/input)
+- [x] T1559 Inter-Process Communication (D-Bus, sockets, SHM, mqueue)
+- [x] T1543 Systemd Service persistence (suspicious ExecStart, generators)
+- [x] T1546 Event Triggered Execution (shell config, trap, udev, RPM scriptlets, Python startup)
+- [x] T1098 Account Manipulation (SSH authorized_keys, privileged groups)
+- [x] T1136 Create Account (UID 0, no-password, system accounts with shells)
+- [x] T1574 Hijack Execution Flow (ld.so.preload, LD_PRELOAD, PATH, RPATH)
+- [x] T1556 Modify Auth Process (PAM, MFA, pam_exec, pam_permit)
+- [x] T1554 Compromise Host Software Binary (rpm -Va, binary integrity)
+- [x] T1547 Boot/Logon Autostart (kernel modules, XDG, rc.local, GRUB)
+- [x] T1037 Boot/Logon Init Scripts (rc.local, init.d, profile.d, environment)
+- [x] T1668 Exclusive Control (flock, PID files, bind mounts, namespaces)
+- [x] T1653 Power Settings (sleep targets, logind, WoL, ACPI)
+- [x] T1542 Pre-OS Boot (Secure Boot, GRUB integrity, firmware, EFI)
+- [x] T1505 Server Software Component (web shells, SQL UDFs, web server modules)
+- [x] T1176 Software Extensions (browser, IDE, GNOME, sudo plugins)
+- [x] T1205 Traffic Signaling (knockd, fwknop, BPF, raw sockets, capabilities)
 
 ### Phase 6 — Defense Evasion (26 techniques)
 - [ ] T1562 Impair Defenses (SELinux, auditd, firewall, history, audit system)
