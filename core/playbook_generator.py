@@ -450,6 +450,98 @@ REMEDIATION_TASKS: dict[str, list[dict[str, Any]]] = {
             "tags": ["mail", "phishing"],
         },
     ],
+
+    # -- Container Security --------------------------------------------------
+    "CS001": [
+        {
+            "name": "Install Podman (rootless container runtime)",
+            "ansible.builtin.dnf": {"name": "podman", "state": "present"},
+            "tags": ["container", "runtime"],
+        },
+        {
+            "name": "Configure subordinate UID ranges for rootless containers",
+            "ansible.builtin.command": {"cmd": "usermod --add-subuids 100000-165535 --add-subgids 100000-165535 {{ ansible_user_id }}"},
+            "changed_when": True,
+            "tags": ["container", "rootless"],
+        },
+    ],
+    "CS002": [
+        {
+            "name": "Configure container image signature policy",
+            "ansible.builtin.copy": {
+                "dest": "/etc/containers/policy.json",
+                "content": '{\n  "default": [{"type": "reject"}],\n  "transports": {\n    "docker": {\n      "registry.redhat.io": [{"type": "signedBy", "keyType": "GPGKeys", "keyPath": "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release"}],\n      "registry.access.redhat.com": [{"type": "signedBy", "keyType": "GPGKeys", "keyPath": "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release"}],\n      "quay.io": [{"type": "insecureAcceptAnything"}]\n    }\n  }\n}\n',
+                "mode": "0644",
+                "backup": True,
+            },
+            "tags": ["container", "image-signing"],
+        },
+        {
+            "name": "Install Trivy container vulnerability scanner",
+            "ansible.builtin.dnf": {"name": "trivy", "state": "present"},
+            "ignore_errors": True,
+            "tags": ["container", "vulnerability-scanning"],
+        },
+    ],
+    "CS003": [
+        {
+            "name": "Audit privileged containers and alert",
+            "ansible.builtin.shell": "podman ps --format '{{.Names}}' --filter 'privileged=true' 2>/dev/null | head -5",
+            "register": "privileged_containers",
+            "changed_when": False,
+            "tags": ["container", "privilege"],
+        },
+        {
+            "name": "Warn if privileged containers found",
+            "ansible.builtin.debug": {"msg": "WARNING: Privileged containers found: {{ privileged_containers.stdout_lines }}"},
+            "when": "privileged_containers.stdout | length > 0",
+            "tags": ["container", "privilege"],
+        },
+    ],
+    "CS005": [
+        {
+            "name": "Set default seccomp profile for Podman",
+            "ansible.builtin.copy": {
+                "dest": "/etc/containers/containers.conf.d/seccomp.conf",
+                "content": "[containers]\nseccomp_profile = \"/usr/share/containers/seccomp.json\"\n",
+                "mode": "0644",
+            },
+            "tags": ["container", "seccomp"],
+        },
+    ],
+    "CS006": [
+        {
+            "name": "Set default container PID limit",
+            "ansible.builtin.copy": {
+                "dest": "/etc/containers/containers.conf.d/limits.conf",
+                "content": "[containers]\npids_limit = 256\n",
+                "mode": "0644",
+            },
+            "tags": ["container", "resource-limits"],
+        },
+    ],
+    "CS008": [
+        {
+            "name": "Configure default read-only rootfs for containers",
+            "ansible.builtin.copy": {
+                "dest": "/etc/containers/containers.conf.d/readonly.conf",
+                "content": "[containers]\nread_only = true\n",
+                "mode": "0644",
+            },
+            "tags": ["container", "filesystem"],
+        },
+    ],
+    "CS010": [
+        {
+            "name": "Install cosign for container image signing",
+            "ansible.builtin.get_url": {
+                "url": "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64",
+                "dest": "/usr/local/bin/cosign",
+                "mode": "0755",
+            },
+            "tags": ["container", "supply-chain"],
+        },
+    ],
 }
 
 
