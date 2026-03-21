@@ -9,6 +9,8 @@ import pytest
 from core.compliance import (
     CIS_CONTROLS,
     CIS_RHEL_BENCHMARK,
+    DISA_STIG_RHEL8,
+    DISA_STIG_RHEL9,
     NIST_CONTROLS,
     ComplianceMapper,
     ComplianceRef,
@@ -101,6 +103,19 @@ class TestGetRefs:
         refs = mapper.get_refs("T1003")
         frameworks = {r.framework for r in refs}
         assert "CIS RHEL 9 Benchmark" in frameworks
+
+    def test_known_technique_with_disa_stig(self, mapper: ComplianceMapper):
+        refs = mapper.get_refs("T1021")
+        frameworks = {r.framework for r in refs}
+        assert "DISA STIG RHEL 8" in frameworks
+        assert "DISA STIG RHEL 9" in frameworks
+
+    def test_disa_stig_refs_have_description(self, mapper: ComplianceMapper):
+        refs = mapper.get_refs("T1562")
+        stig_refs = [r for r in refs if "DISA STIG" in r.framework]
+        assert len(stig_refs) > 0
+        for r in stig_refs:
+            assert r.description, f"STIG ref {r.control_id} has empty description (STIG ID)"
 
     def test_subtechnique_maps_to_parent(self, mapper: ComplianceMapper):
         refs = mapper.get_refs("T1021.004")
@@ -229,15 +244,40 @@ class TestMappingCoverage:
     def test_cis_rhel_benchmark_has_entries(self):
         assert len(CIS_RHEL_BENCHMARK) > 0
 
-    def test_no_empty_refs(self):
-        for tid, refs in CIS_CONTROLS.items():
-            assert len(refs) > 0, f"CIS Controls {tid} has empty refs"
-            for r in refs:
-                assert r.control_id, f"CIS Controls {tid} has empty control_id"
-                assert r.control_name, f"CIS Controls {tid} has empty control_name"
+    def test_disa_stig_rhel8_coverage(self):
+        for tid in self.CORE_TECHNIQUES:
+            assert tid in DISA_STIG_RHEL8, f"{tid} missing from DISA STIG RHEL 8"
 
-        for tid, refs in NIST_CONTROLS.items():
-            assert len(refs) > 0, f"NIST {tid} has empty refs"
+    def test_disa_stig_rhel9_coverage(self):
+        for tid in self.CORE_TECHNIQUES:
+            assert tid in DISA_STIG_RHEL9, f"{tid} missing from DISA STIG RHEL 9"
+
+    def test_disa_stig_rhel8_has_entries(self):
+        assert len(DISA_STIG_RHEL8) >= 25, f"Expected 25+ techniques, got {len(DISA_STIG_RHEL8)}"
+
+    def test_disa_stig_rhel9_has_entries(self):
+        assert len(DISA_STIG_RHEL9) >= 25, f"Expected 25+ techniques, got {len(DISA_STIG_RHEL9)}"
+
+    def test_no_empty_refs(self):
+        all_maps = [
+            ("CIS Controls", CIS_CONTROLS),
+            ("NIST 800-53", NIST_CONTROLS),
+            ("DISA STIG RHEL 8", DISA_STIG_RHEL8),
+            ("DISA STIG RHEL 9", DISA_STIG_RHEL9),
+        ]
+        for name, mapping in all_maps:
+            for tid, refs in mapping.items():
+                assert len(refs) > 0, f"{name} {tid} has empty refs"
+                for r in refs:
+                    assert r.control_id, f"{name} {tid} has empty control_id"
+                    assert r.control_name, f"{name} {tid} has empty control_name"
+
+    def test_stig_refs_have_rule_ids(self):
+        """DISA STIG refs should have V-XXXXXX format control IDs."""
+        for tid, refs in DISA_STIG_RHEL8.items():
             for r in refs:
-                assert r.control_id
-                assert r.control_name
+                assert r.control_id.startswith("V-"), f"STIG RHEL8 {tid} control_id should start with V-: {r.control_id}"
+
+        for tid, refs in DISA_STIG_RHEL9.items():
+            for r in refs:
+                assert r.control_id.startswith("V-"), f"STIG RHEL9 {tid} control_id should start with V-: {r.control_id}"

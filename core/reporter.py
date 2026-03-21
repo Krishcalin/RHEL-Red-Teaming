@@ -79,6 +79,8 @@ class Reporter:
             "CIS Controls",
             "NIST 800-53",
             "CIS RHEL Benchmark",
+            "DISA STIG RHEL 8",
+            "DISA STIG RHEL 9",
         ])
         for r in scan_result.results:
             refs = self.compliance.get_refs_by_framework(r.technique_id)
@@ -94,6 +96,8 @@ class Reporter:
                 "; ".join(f"{c.control_id}" for c in refs.get("CIS Controls v8", [])),
                 "; ".join(f"{c.control_id}" for c in refs.get("NIST 800-53", [])),
                 "; ".join(f"{c.control_id}" for c in refs.get("CIS RHEL 9 Benchmark", [])),
+                "; ".join(f"{c.control_id}" for c in refs.get("DISA STIG RHEL 8", [])),
+                "; ".join(f"{c.control_id}" for c in refs.get("DISA STIG RHEL 9", [])),
             ])
         path.write_text(output.getvalue(), encoding="utf-8")
         log.info("report_generated", format="csv", path=str(path))
