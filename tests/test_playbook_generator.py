@@ -1,0 +1,264 @@
+"""Tests for Ansible playbook generator."""
+
+from __future__ import annotations
+
+import yaml
+from datetime import datetime, timedelta
+from pathlib import Path
+
+import pytest
+
+from core.models import (
+    Finding,
+    ModuleResult,
+    ScanConfig,
+    ScanResult,
+    Severity,
+    Status,
+    Tactic,
+)
+from core.playbook_generator import (
+    HANDLERS,
+    REMEDIATION_TASKS,
+    PlaybookGenerator,
+)
+
+
+@pytest.fixture
+def generator(tmp_path: Path) -> PlaybookGenerator:
+    return PlaybookGenerator(output_dir=str(tmp_path))
+
+
+@pytest.fixture
+def scan_result() -> ScanResult:
+    start = datetime(2026, 3, 21, 14, 0, 0)
+    return ScanResult(
+        scan_id="pb01",
+        config=ScanConfig(),
+        start_time=start,
+        end_time=start + timedelta(seconds=60),
+        target_info={"hostname": "rhel-test"},
+        results=[
+            ModuleResult(
+                technique_id="T1021",
+                technique_name="Remote Services",
+                tactic=Tactic.LATERAL_MOVEMENT,
+                status=Status.VULNERABLE,
+                findings=[
+                    Finding(
+                        title="SSH root login enabled",
+                        description="PermitRootLogin yes",
+                        severity=Severity.HIGH,
+                        remediation="Set PermitRootLogin no in /etc/ssh/sshd_config",
+                    ),
+                ],
+                mitigations=["Disable root login"],
+            ),
+            ModuleResult(
+                technique_id="T1562",
+                technique_name="Impair Defenses",
+                tactic=Tactic.DEFENSE_EVASION,
+                status=Status.VULNERABLE,
+                findings=[
+                    Finding(
+                        title="SELinux not enforcing",
+                        description="SELinux is permissive",
+                        severity=Severity.CRITICAL,
+                        remediation="setenforce 1",
+                    ),
+                ],
+            ),
+            ModuleResult(
+                technique_id="T1082",
+                technique_name="System Info",
+                tactic=Tactic.DISCOVERY,
+                status=Status.NOT_VULNERABLE,
+            ),
+        ],
+    )
+
+
+@pytest.fixture
+def scan_with_unmapped(scan_result: ScanResult) -> ScanResult:
+    """Scan result with a technique that has no predefined tasks."""
+    scan_result.results.append(
+        ModuleResult(
+            technique_id="T9999",
+            technique_name="Unknown Technique",
+            tactic=Tactic.DISCOVERY,
+            status=Status.VULNERABLE,
+            findings=[
+                Finding(
+                    title="Something bad",
+                    description="A problem",
+                    severity=Severity.HIGH,
+                    remediation="chmod 600 /etc/secret.conf",
+                ),
+            ],
+        )
+    )
+    return scan_result
+
+
+class TestPlaybookGeneration:
+    def test_generates_file(self, generator: PlaybookGenerator, scan_result: ScanResult):
+        path = generator.generate(scan_result)
+        assert path.exists()
+        assert path.suffix == ".yml"
+
+    def test_playbook_is_valid_yaml(self, generator: PlaybookGenerator, scan_result: ScanResult):
+        path = generator.generate(scan_result)
+        content = path.read_text(encoding="utf-8")
+        # Skip comment lines, parse YAML
+        docs = list(yaml.safe_load_all(content))
+        assert len(docs) >= 1
+        playbook = docs[0]
+        assert isinstance(playbook, list)
+        assert len(playbook) == 1
+        play = playbook[0]
+        assert "tasks" in play
+        assert "name" in play
+
+    def test_only_vulnerable_results_produce_tasks(self, generator: PlaybookGenerator, scan_result: ScanResult):
+        path = generator.generate(scan_result)
+        content = path.read_text(encoding="utf-8")
+        # T1082 is NOT_VULNERABLE, should not appear
+        assert "T1082" not in content
+
+    def test_tasks_include_ssh_hardening(self, generator: PlaybookGenerator, scan_result: ScanResult):
+        path = generator.generate(scan_result)
+        content = path.read_text(encoding="utf-8")
+        assert "PermitRootLogin no" in content
+
+    def test_tasks_include_selinux(self, generator: PlaybookGenerator, scan_result: ScanResult):
+        path = generator.generate(scan_result)
+        content = path.read_text(encoding="utf-8")
+        assert "enforcing" in content
+
+    def test_handlers_included_when_referenced(self, generator: PlaybookGenerator, scan_result: ScanResult):
+        path = generator.generate(scan_result)
+        content = path.read_text(encoding="utf-8")
+        assert "restart sshd" in content
+
+    def test_header_comment(self, generator: PlaybookGenerator, scan_result: ScanResult):
+        path = generator.generate(scan_result)
+        content = path.read_text(encoding="utf-8")
+        assert "Generated by RHEL-RT" in content
+        assert "ansible-playbook" in content
+        assert "pb01" in content
+
+    def test_become_true(self, generator: PlaybookGenerator, scan_result: ScanResult):
+        path = generator.generate(scan_result)
+        docs = list(yaml.safe_load_all(path.read_text(encoding="utf-8")))
+        play = docs[0][0]
+        assert play["become"] is True
+
+    def test_no_duplicate_tasks(self, generator: PlaybookGenerator, scan_result: ScanResult):
+        path = generator.generate(scan_result)
+        docs = list(yaml.safe_load_all(path.read_text(encoding="utf-8")))
+        play = docs[0][0]
+        names = [t["name"] for t in play["tasks"]]
+        assert len(names) == len(set(names)), "Duplicate task names found"
+
+
+class TestSeverityFilter:
+    def test_critical_only(self, generator: PlaybookGenerator, scan_result: ScanResult):
+        path = generator.generate(scan_result, severity_filter=Severity.CRITICAL)
+        docs = list(yaml.safe_load_all(path.read_text(encoding="utf-8")))
+        play = docs[0][0]
+        # T1562 is CRITICAL, T1021 is HIGH — should only get T1562 tasks
+        task_names = [t["name"] for t in play["tasks"]]
+        assert any("SELinux" in n or "auditd" in n or "firewalld" in n for n in task_names)
+
+    def test_no_filter_gets_all(self, generator: PlaybookGenerator, scan_result: ScanResult):
+        path = generator.generate(scan_result)
+        docs = list(yaml.safe_load_all(path.read_text(encoding="utf-8")))
+        play = docs[0][0]
+        assert len(play["tasks"]) > 3
+
+
+class TestTagsFilter:
+    def test_filter_by_stig_tag(self, generator: PlaybookGenerator, scan_result: ScanResult):
+        path = generator.generate(scan_result, tags_filter=["stig"])
+        docs = list(yaml.safe_load_all(path.read_text(encoding="utf-8")))
+        play = docs[0][0]
+        for task in play["tasks"]:
+            assert "stig" in task.get("tags", []), f"Task '{task['name']}' missing stig tag"
+
+    def test_filter_by_ssh_tag(self, generator: PlaybookGenerator, scan_result: ScanResult):
+        path = generator.generate(scan_result, tags_filter=["ssh"])
+        docs = list(yaml.safe_load_all(path.read_text(encoding="utf-8")))
+        play = docs[0][0]
+        for task in play["tasks"]:
+            assert "ssh" in task.get("tags", [])
+
+
+class TestPerTechniquePlaybooks:
+    def test_generates_multiple_files(self, generator: PlaybookGenerator, scan_result: ScanResult):
+        paths = generator.generate_per_technique(scan_result)
+        assert len(paths) >= 2  # T1021 and T1562
+
+    def test_technique_id_in_filename(self, generator: PlaybookGenerator, scan_result: ScanResult):
+        paths = generator.generate_per_technique(scan_result)
+        filenames = [p.name for p in paths]
+        assert any("T1021" in f for f in filenames)
+        assert any("T1562" in f for f in filenames)
+
+    def test_each_is_valid_yaml(self, generator: PlaybookGenerator, scan_result: ScanResult):
+        paths = generator.generate_per_technique(scan_result)
+        for p in paths:
+            docs = list(yaml.safe_load_all(p.read_text(encoding="utf-8")))
+            assert len(docs) >= 1
+
+
+class TestAutoGeneratedTasks:
+    def test_finding_remediation_becomes_task(self, generator: PlaybookGenerator, scan_with_unmapped: ScanResult):
+        path = generator.generate(scan_with_unmapped)
+        content = path.read_text(encoding="utf-8")
+        assert "chmod 600 /etc/secret.conf" in content
+
+    def test_parse_remediation_command(self, generator: PlaybookGenerator):
+        assert generator._parse_remediation_command("Fix: chmod 644 /etc/file") == "chmod 644 /etc/file"
+        assert generator._parse_remediation_command("Run sysctl -w net.ipv4.ip_forward=0") == "sysctl -w net.ipv4.ip_forward=0"
+        assert generator._parse_remediation_command("Just a description with no command") is None
+        assert generator._parse_remediation_command("systemctl enable --now auditd") == "systemctl enable --now auditd"
+
+
+class TestRemediationTaskMappings:
+    def test_all_tasks_have_names(self):
+        for tid, tasks in REMEDIATION_TASKS.items():
+            for task in tasks:
+                assert "name" in task, f"Task in {tid} missing name"
+
+    def test_all_tasks_have_tags(self):
+        for tid, tasks in REMEDIATION_TASKS.items():
+            for task in tasks:
+                assert "tags" in task, f"Task '{task.get('name', '?')}' in {tid} missing tags"
+                assert len(task["tags"]) > 0
+
+    def test_coverage_count(self):
+        assert len(REMEDIATION_TASKS) >= 25, f"Expected 25+ techniques mapped, got {len(REMEDIATION_TASKS)}"
+
+    def test_handlers_have_names(self):
+        for h in HANDLERS:
+            assert "name" in h
+
+
+class TestUtilityMethods:
+    def test_get_available_tags(self, generator: PlaybookGenerator):
+        tags = generator.get_available_tags()
+        assert "stig" in tags
+        assert "ssh" in tags
+        assert "cis" in tags
+
+    def test_get_technique_coverage(self, generator: PlaybookGenerator):
+        coverage = generator.get_technique_coverage()
+        assert "T1021" in coverage
+        assert coverage["T1021"] >= 3
+
+    def test_empty_scan_produces_empty_playbook(self, generator: PlaybookGenerator):
+        sr = ScanResult(scan_id="empty", config=ScanConfig())
+        path = generator.generate(sr)
+        docs = list(yaml.safe_load_all(path.read_text(encoding="utf-8")))
+        play = docs[0][0]
+        assert play["tasks"] == []

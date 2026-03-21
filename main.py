@@ -14,7 +14,8 @@ from core.banner import display_compact_banner
 from core.engine import ScanEngine
 from core.logger import setup_logging
 from core.mitre_mapper import MitreMapper
-from core.models import ScanConfig, ScanResult, SessionType, Tactic, Target
+from core.models import ScanConfig, ScanResult, SessionType, Status, Tactic, Target
+from core.playbook_generator import PlaybookGenerator
 from core.reporter import Reporter
 
 console = Console()
@@ -149,6 +150,12 @@ def scan(
     layer_path = mapper.generate_layer(result)
     console.print(f"ATT&CK layer: [cyan]{layer_path}[/]")
 
+    # Generate remediation playbook if vulnerabilities found
+    if result.vulnerable_count > 0:
+        gen = PlaybookGenerator(output_dir=scan_config.output_dir)
+        playbook_path = gen.generate(result)
+        console.print(f"Playbook:     [cyan]{playbook_path}[/]")
+
 
 @cli.command()
 @click.option("--input", "input_path", required=True, help="Path to scan result JSON")
@@ -173,6 +180,69 @@ def report(input_path: str, output_format: str) -> None:
     reporter = Reporter()
     report_path = reporter.generate(scan_result, fmt=output_format)
     console.print(f"Report saved: [cyan]{report_path}[/]")
+
+
+@cli.command()
+@click.option("--input", "input_path", required=True, help="Path to scan result JSON")
+@click.option("--severity", default=None, type=click.Choice(["critical", "high", "medium", "low"]),
+              help="Minimum severity to include")
+@click.option("--tags", default=None, help="Comma-separated tag filter (e.g., ssh,stig)")
+@click.option("--per-technique", is_flag=True, help="Generate one playbook per technique")
+def remediate(input_path: str, severity: str | None, tags: str | None, per_technique: bool) -> None:
+    """Generate Ansible remediation playbook from scan results."""
+    from core.models import Severity as SevEnum
+
+    path = Path(input_path)
+    if not path.exists():
+        console.print(f"[red]Input file not found: {input_path}[/]")
+        sys.exit(1)
+
+    data = json.loads(path.read_text(encoding="utf-8"))
+
+    scan_result = ScanResult(
+        scan_id=data["scan_id"],
+        config=ScanConfig(),
+        start_time=data.get("start_time", ""),
+        target_info=data.get("target_info", {}),
+    )
+
+    # Reconstruct ModuleResults
+    from core.models import ModuleResult, Finding
+    for r in data.get("results", []):
+        findings = [
+            Finding(
+                title=f["title"],
+                description=f["description"],
+                severity=SevEnum(f["severity"]),
+                evidence=f.get("evidence", ""),
+                remediation=f.get("remediation", ""),
+            )
+            for f in r.get("findings", [])
+        ]
+        scan_result.results.append(ModuleResult(
+            technique_id=r["technique_id"],
+            technique_name=r["technique_name"],
+            tactic=Tactic(r["tactic"]),
+            status=Status(r["status"]),
+            findings=findings,
+            mitigations=r.get("mitigations", []),
+        ))
+
+    severity_filter = SevEnum(severity) if severity else None
+    tags_filter = [t.strip() for t in tags.split(",")] if tags else None
+
+    gen = PlaybookGenerator()
+
+    if per_technique:
+        paths = gen.generate_per_technique(scan_result)
+        for p in paths:
+            console.print(f"Playbook: [cyan]{p}[/]")
+        console.print(f"\n[green]{len(paths)} technique playbooks generated[/]")
+    else:
+        playbook_path = gen.generate(scan_result, severity_filter=severity_filter, tags_filter=tags_filter)
+        console.print(f"\nPlaybook: [cyan]{playbook_path}[/]")
+        console.print("[green]Review the playbook, then run:[/]")
+        console.print(f"  ansible-playbook -i inventory {playbook_path.name} --check")
 
 
 @cli.command(name="list-modules")
