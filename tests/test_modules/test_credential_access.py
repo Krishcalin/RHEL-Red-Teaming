@@ -206,3 +206,87 @@ class TestMFARequestGen:
         from modules.credential_access.T1621_mfa_request_gen import MFARequestGenCheck
         m = MFARequestGenCheck()
         assert m.TECHNIQUE_ID == "T1621"
+
+
+# ---------------------------------------------------------------------------
+# T1040 — Network Sniffing
+# ---------------------------------------------------------------------------
+
+
+class TestNetworkSniffingCheck:
+    def test_attributes(self):
+        from modules.credential_access.T1040_network_sniffing import NetworkSniffingCheck
+        m = NetworkSniffingCheck()
+        assert m.TECHNIQUE_ID == "T1040"
+        assert m.TACTIC == Tactic.CREDENTIAL_ACCESS
+
+    def test_capture_tool_with_cap(self):
+        from modules.credential_access.T1040_network_sniffing import NetworkSniffingCheck
+        session = make_session({
+            "which tcpdump": CommandResult("/usr/bin/tcpdump\n", "", 0),
+            "which tshark": CommandResult("", "", 1),
+            "which dumpcap": CommandResult("", "", 1),
+            "which ngrep": CommandResult("", "", 1),
+            "which tcpflow": CommandResult("", "", 1),
+            "getcap /usr/bin/tcpdump": CommandResult("/usr/bin/tcpdump cap_net_raw=ep\n", "", 0),
+            "ip link show": CommandResult("eth0: <BROADCAST,MULTICAST,UP>\n", "", 0),
+            "ping_group_range": CommandResult("1 0\n", "", 0),
+        })
+        m = NetworkSniffingCheck()
+        result = m.check(session)
+        assert result.status == Status.VULNERABLE
+        assert any("cap_net_raw" in f.title for f in result.findings)
+
+    def test_clean(self):
+        from modules.credential_access.T1040_network_sniffing import NetworkSniffingCheck
+        m = NetworkSniffingCheck()
+        result = m.check(make_session({}))
+        assert result.status == Status.NOT_VULNERABLE
+
+
+# ---------------------------------------------------------------------------
+# T1003.008 — /etc/passwd and /etc/shadow
+# ---------------------------------------------------------------------------
+
+
+class TestShadowFileCheck:
+    def test_attributes(self):
+        from modules.credential_access.T1003_008_shadow_file import ShadowFileCheck
+        m = ShadowFileCheck()
+        assert m.TECHNIQUE_ID == "T1003.008"
+        assert m.SEVERITY == Severity.CRITICAL
+
+    def test_shadow_readable_by_non_root(self):
+        from modules.credential_access.T1003_008_shadow_file import ShadowFileCheck
+        session = make_session({
+            "stat -c '%a %U %G' /etc/shadow": CommandResult("644 root root\n", "", 0),
+            "stat -c '%a %U %G' /etc/shadow-": CommandResult("", "", 1),
+            "stat -c '%a %U %G' /etc/gshadow": CommandResult("000 root root\n", "", 0),
+            "stat -c '%a %U %G' /etc/gshadow-": CommandResult("", "", 1),
+            "test -r /etc/shadow": CommandResult("readable\n", "", 0),
+            "whoami": CommandResult("testuser\n", "", 0),
+            "ENCRYPT_METHOD": CommandResult("ENCRYPT_METHOD SHA512\n", "", 0),
+            "pam_unix.so": CommandResult("password sufficient pam_unix.so sha512\n", "", 0),
+            "awk -F:": CommandResult("", "", 1),
+        })
+        m = ShadowFileCheck()
+        result = m.check(session)
+        assert result.status == Status.VULNERABLE
+        assert any("/etc/shadow" in f.title for f in result.findings)
+
+    def test_weak_hash_algorithm(self):
+        from modules.credential_access.T1003_008_shadow_file import ShadowFileCheck
+        session = make_session({
+            "stat -c '%a %U %G' /etc/shadow": CommandResult("000 root root\n", "", 0),
+            "stat -c '%a %U %G' /etc/shadow-": CommandResult("", "", 1),
+            "stat -c '%a %U %G' /etc/gshadow": CommandResult("000 root root\n", "", 0),
+            "stat -c '%a %U %G' /etc/gshadow-": CommandResult("", "", 1),
+            "test -r /etc/shadow": CommandResult("", "", 1),
+            "ENCRYPT_METHOD": CommandResult("ENCRYPT_METHOD MD5\n", "", 0),
+            "pam_unix.so": CommandResult("password sufficient pam_unix.so md5\n", "", 0),
+            "awk -F:": CommandResult("", "", 1),
+        })
+        m = ShadowFileCheck()
+        result = m.check(session)
+        assert result.status == Status.VULNERABLE
+        assert any("MD5" in f.title for f in result.findings)

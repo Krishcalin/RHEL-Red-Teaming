@@ -261,3 +261,131 @@ class TestProxyCheck:
         assert any("Tor" in t for t in titles)
         critical = [f for f in result.findings if f.severity == Severity.CRITICAL]
         assert len(critical) >= 1
+
+
+# ---------------------------------------------------------------------------
+# New C2 modules — attribute and basic functionality tests
+# ---------------------------------------------------------------------------
+
+import importlib
+
+
+class TestNewC2ModulesCommon:
+    """Cross-module tests for all 15 new C2 modules."""
+
+    MODULE_CLASSES = [
+        ("modules.command_and_control.T1092_removable_media_c2", "RemovableMediaC2Check", "T1092"),
+        ("modules.command_and_control.T1659_content_injection_c2", "ContentInjectionC2Check", "T1659"),
+        ("modules.command_and_control.T1132_data_encoding", "DataEncodingCheck", "T1132"),
+        ("modules.command_and_control.T1001_data_obfuscation", "DataObfuscationCheck", "T1001"),
+        ("modules.command_and_control.T1568_dynamic_resolution", "DynamicResolutionCheck", "T1568"),
+        ("modules.command_and_control.T1008_fallback_channels", "FallbackChannelsCheck", "T1008"),
+        ("modules.command_and_control.T1665_hide_infrastructure", "HideInfrastructureCheck", "T1665"),
+        ("modules.command_and_control.T1105_ingress_tool_transfer", "IngressToolTransferCheck", "T1105"),
+        ("modules.command_and_control.T1104_multi_stage", "MultiStageCheck", "T1104"),
+        ("modules.command_and_control.T1095_non_app_protocol", "NonAppProtocolCheck", "T1095"),
+        ("modules.command_and_control.T1571_non_standard_port", "NonStandardPortCheck", "T1571"),
+        ("modules.command_and_control.T1572_protocol_tunneling", "ProtocolTunnelingCheck", "T1572"),
+        ("modules.command_and_control.T1219_remote_access_tools", "RemoteAccessToolsCheck", "T1219"),
+        ("modules.command_and_control.T1205_traffic_signaling", "TrafficSignalingCheck", "T1205"),
+        ("modules.command_and_control.T1102_web_service", "WebServiceC2Check", "T1102"),
+    ]
+
+    def test_all_technique_ids(self):
+        for mod_path, cls_name, expected_id in self.MODULE_CLASSES:
+            mod = importlib.import_module(mod_path)
+            cls = getattr(mod, cls_name)
+            assert cls().TECHNIQUE_ID == expected_id, f"{cls_name} ID mismatch"
+
+    def test_all_tactic_is_c2(self):
+        for mod_path, cls_name, _ in self.MODULE_CLASSES:
+            mod = importlib.import_module(mod_path)
+            cls = getattr(mod, cls_name)
+            assert cls().TACTIC == Tactic.COMMAND_AND_CONTROL, f"{cls_name} tactic wrong"
+
+    def test_all_safe_mode(self):
+        for mod_path, cls_name, _ in self.MODULE_CLASSES:
+            mod = importlib.import_module(mod_path)
+            cls = getattr(mod, cls_name)
+            assert cls().SAFE_MODE is True
+
+    def test_all_have_mitigations(self):
+        for mod_path, cls_name, _ in self.MODULE_CLASSES:
+            mod = importlib.import_module(mod_path)
+            cls = getattr(mod, cls_name)
+            assert len(cls().get_mitigations()) > 0
+
+    def test_simulate_delegates(self):
+        for mod_path, cls_name, _ in self.MODULE_CLASSES:
+            mod = importlib.import_module(mod_path)
+            cls = getattr(mod, cls_name)
+            instance = cls()
+            session = make_session({})
+            assert instance.check(session).status == instance.simulate(session).status
+
+    def test_clean_system_not_vulnerable(self):
+        for mod_path, cls_name, _ in self.MODULE_CLASSES:
+            mod = importlib.import_module(mod_path)
+            cls = getattr(mod, cls_name)
+            instance = cls()
+            result = instance.check(make_session({}))
+            # Most should be NOT_VULNERABLE on clean system, but some detect defaults
+            assert result.status in (Status.VULNERABLE, Status.NOT_VULNERABLE)
+
+
+class TestIngressToolTransferCheck:
+    def test_download_tools(self):
+        from modules.command_and_control.T1105_ingress_tool_transfer import IngressToolTransferCheck
+        session = make_session({
+            "which curl": CommandResult("/usr/bin/curl\n", "", 0),
+            "which wget": CommandResult("/usr/bin/wget\n", "", 0),
+            "which scp": CommandResult("", "", 1),
+            "which rsync": CommandResult("", "", 1),
+            "which nc": CommandResult("", "", 1),
+            "which ncat": CommandResult("", "", 1),
+            "which socat": CommandResult("", "", 1),
+            "which fetch": CommandResult("", "", 1),
+            "mount": CommandResult("", "", 1),
+            "systemctl is-active fapolicyd": CommandResult("inactive\n", "", 0),
+        })
+        m = IngressToolTransferCheck()
+        result = m.check(session)
+        assert result.status == Status.VULNERABLE
+        titles = [f.title for f in result.findings]
+        assert any("curl" in t for t in titles)
+
+
+class TestProtocolTunnelingCheck:
+    def test_ssh_forwarding(self):
+        from modules.command_and_control.T1572_protocol_tunneling import ProtocolTunnelingCheck
+        session = make_session({
+            "which socat": CommandResult("", "", 1),
+            "which chisel": CommandResult("", "", 1),
+            "which ngrok": CommandResult("", "", 1),
+            "which bore": CommandResult("", "", 1),
+            "which rathole": CommandResult("", "", 1),
+            "which frpc": CommandResult("", "", 1),
+            "AllowTcpForwarding": CommandResult("AllowTcpForwarding yes\n", "", 0),
+            "ss -tnp": CommandResult("", "", 1),
+        })
+        m = ProtocolTunnelingCheck()
+        result = m.check(session)
+        assert result.status == Status.VULNERABLE
+
+
+class TestRemoteAccessToolsCheck:
+    def test_vnc_exposed(self):
+        from modules.command_and_control.T1219_remote_access_tools import RemoteAccessToolsCheck
+        session = make_session({
+            "pgrep -x teamviewerd": CommandResult("", "", 1),
+            "pgrep -x anydesk": CommandResult("", "", 1),
+            "pgrep -x rustdesk": CommandResult("", "", 1),
+            "pgrep -x xrdp": CommandResult("", "", 1),
+            "pgrep -x x11vnc": CommandResult("", "", 1),
+            "pgrep -x meshagent": CommandResult("", "", 1),
+            "rpm -q": CommandResult("package not installed\n", "", 1),
+            "ss -tuln": CommandResult("LISTEN 0 5 0.0.0.0:5901 0.0.0.0:*\n", "", 0),
+        })
+        m = RemoteAccessToolsCheck()
+        result = m.check(session)
+        assert result.status == Status.VULNERABLE

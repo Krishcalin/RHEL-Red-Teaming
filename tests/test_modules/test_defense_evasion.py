@@ -811,3 +811,78 @@ class TestImpersonationCheck:
         result = mod.check(session)
         assert result.status == Status.VULNERABLE
         assert len(mod._findings) > 0
+
+
+# ---------------------------------------------------------------------------
+# T1564.002 — Hidden Users
+# ---------------------------------------------------------------------------
+
+
+class TestHiddenUsersCheck:
+    def test_attributes(self):
+        from modules.defense_evasion.T1564_002_hidden_users import HiddenUsersCheck
+        m = HiddenUsersCheck()
+        assert m.TECHNIQUE_ID == "T1564.002"
+        assert m.TACTIC == Tactic.DEFENSE_EVASION
+
+    def test_uid_zero_non_root(self):
+        from modules.defense_evasion.T1564_002_hidden_users import HiddenUsersCheck
+        session = make_session({
+            "awk -F: '$3==0": CommandResult("root\ntoor\n", "", 0),
+            "awk -F: '$3>=1000": CommandResult("admin:1000\n", "", 0),
+            "awk -F: '$7==\"/sbin/nologin\"": CommandResult("", "", 1),
+        })
+        m = HiddenUsersCheck()
+        result = m.check(session)
+        assert result.status == Status.VULNERABLE
+        assert any("UID 0" in f.title for f in result.findings)
+
+
+# ---------------------------------------------------------------------------
+# T1070.003 — Clear Command History
+# ---------------------------------------------------------------------------
+
+
+class TestClearHistoryCheck:
+    def test_attributes(self):
+        from modules.defense_evasion.T1070_003_clear_history import ClearHistoryCheck
+        m = ClearHistoryCheck()
+        assert m.TECHNIQUE_ID == "T1070.003"
+
+    def test_no_syslog_forwarding(self):
+        from modules.defense_evasion.T1070_003_clear_history import ClearHistoryCheck
+        session = make_session({
+            "find /home /root -name '.bash_history'": CommandResult("", "", 1),
+            "lsattr /root/.bash_history": CommandResult("-------------e-- /root/.bash_history\n", "", 0),
+            "grep -r 'shopt.*histappend": CommandResult("", "", 1),
+            "grep -r 'PROMPT_COMMAND.*logger": CommandResult("", "", 1),
+        })
+        m = ClearHistoryCheck()
+        result = m.check(session)
+        assert result.status == Status.VULNERABLE
+
+
+# ---------------------------------------------------------------------------
+# T1574.007 — PATH Hijacking
+# ---------------------------------------------------------------------------
+
+
+class TestPathHijackingCheck:
+    def test_attributes(self):
+        from modules.defense_evasion.T1574_007_path_hijacking import PathHijackingCheck
+        m = PathHijackingCheck()
+        assert m.TECHNIQUE_ID == "T1574.007"
+
+    def test_dot_in_path(self):
+        from modules.defense_evasion.T1574_007_path_hijacking import PathHijackingCheck
+        session = make_session({
+            "echo $PATH": CommandResult("/usr/bin:.:/usr/sbin\n", "", 0),
+            "test -d /usr/bin": CommandResult("", "", 0),
+            "test -w /usr/bin": CommandResult("", "", 1),
+            "test -d .": CommandResult("", "", 0),
+            "test -w .": CommandResult("writable\n", "", 0),
+        })
+        m = PathHijackingCheck()
+        result = m.check(session)
+        assert result.status == Status.VULNERABLE
+        assert any("'.'" in f.title or "dot" in f.title.lower() for f in result.findings)

@@ -258,3 +258,131 @@ class TestLateralToolTransferCheck:
         m = LateralToolTransferCheck()
         result = m.check(session)
         assert result.status == Status.NOT_VULNERABLE
+
+
+# ---------------------------------------------------------------------------
+# T1210 — Exploitation of Remote Services
+# ---------------------------------------------------------------------------
+
+
+class TestExploitRemoteServicesCheck:
+    def test_attributes(self):
+        from modules.lateral_movement.T1210_exploit_remote import ExploitRemoteServicesCheck
+        m = ExploitRemoteServicesCheck()
+        assert m.TECHNIQUE_ID == "T1210"
+        assert m.TACTIC == Tactic.LATERAL_MOVEMENT
+
+    def test_exposed_management(self):
+        from modules.lateral_movement.T1210_exploit_remote import ExploitRemoteServicesCheck
+        session = make_session({
+            "pgrep -x sshd": CommandResult("", "", 1),
+            "pgrep -x httpd": CommandResult("", "", 1),
+            "pgrep -x smbd": CommandResult("", "", 1),
+            "pgrep -x named": CommandResult("", "", 1),
+            "ss -tuln": CommandResult("LISTEN 0 5 0.0.0.0:9090 0.0.0.0:*\n", "", 0),
+            "firewall-cmd --get-active-zones": CommandResult("public\n  interfaces: eth0\n", "", 0),
+        })
+        m = ExploitRemoteServicesCheck()
+        result = m.check(session)
+        assert result.status == Status.VULNERABLE
+
+
+# ---------------------------------------------------------------------------
+# T1534 — Internal Spearphishing
+# ---------------------------------------------------------------------------
+
+
+class TestInternalSpearphishingCheck:
+    def test_attributes(self):
+        from modules.lateral_movement.T1534_internal_spearphishing import InternalSpearphishingCheck
+        m = InternalSpearphishingCheck()
+        assert m.TECHNIQUE_ID == "T1534"
+
+    def test_mail_client_available(self):
+        from modules.lateral_movement.T1534_internal_spearphishing import InternalSpearphishingCheck
+        session = make_session({
+            "postconf mynetworks": CommandResult("", "", 1),
+            "which mail": CommandResult("/usr/bin/mail\n", "", 0),
+            "which sendmail": CommandResult("", "", 1),
+            "which mutt": CommandResult("", "", 1),
+            "getent passwd": CommandResult("3\n", "", 0),
+            "'/bin/bash": CommandResult("root\nadmin\nuser\n", "", 0),
+        })
+        m = InternalSpearphishingCheck()
+        result = m.check(session)
+        assert result.status == Status.VULNERABLE
+
+
+# ---------------------------------------------------------------------------
+# T1563 — Remote Service Session Hijacking
+# ---------------------------------------------------------------------------
+
+
+class TestSessionHijackingCheck:
+    def test_attributes(self):
+        from modules.lateral_movement.T1563_session_hijacking import SessionHijackingCheck
+        m = SessionHijackingCheck()
+        assert m.TECHNIQUE_ID == "T1563"
+
+    def test_agent_forwarding_enabled(self):
+        from modules.lateral_movement.T1563_session_hijacking import SessionHijackingCheck
+        session = make_session({
+            "AllowAgentForwarding": CommandResult("AllowAgentForwarding yes\n", "", 0),
+            "find /home /root -name 'config'": CommandResult("", "", 1),
+            "find /tmp -name 'tmux": CommandResult("", "", 1),
+            "find /tmp -name 'screen": CommandResult("", "", 1),
+            "find /tmp -name 'ssh-": CommandResult("", "", 1),
+        })
+        m = SessionHijackingCheck()
+        result = m.check(session)
+        assert result.status == Status.VULNERABLE
+
+
+# ---------------------------------------------------------------------------
+# T1072 — Software Deployment Tools
+# ---------------------------------------------------------------------------
+
+
+class TestSoftwareDeploymentCheck:
+    def test_attributes(self):
+        from modules.lateral_movement.T1072_software_deployment import SoftwareDeploymentCheck
+        m = SoftwareDeploymentCheck()
+        assert m.TECHNIQUE_ID == "T1072"
+
+    def test_ansible_with_inventory(self):
+        from modules.lateral_movement.T1072_software_deployment import SoftwareDeploymentCheck
+        session = make_session({
+            "which ansible": CommandResult("/usr/bin/ansible\n", "", 0),
+            "find /etc/ansible /home": CommandResult("/etc/ansible/hosts\n", "", 0),
+            "head -5": CommandResult("[webservers]\n192.168.1.10\n", "", 0),
+            "systemctl is-active puppet": CommandResult("inactive\n", "", 0),
+            "systemctl is-active salt-minion": CommandResult("inactive\n", "", 0),
+            "which chef-client": CommandResult("", "", 1),
+        })
+        m = SoftwareDeploymentCheck()
+        result = m.check(session)
+        assert result.status == Status.VULNERABLE
+
+
+# ---------------------------------------------------------------------------
+# T1080 — Taint Shared Content
+# ---------------------------------------------------------------------------
+
+
+class TestTaintSharedContentCheck:
+    def test_attributes(self):
+        from modules.lateral_movement.T1080_taint_shared_content import TaintSharedContentCheck
+        m = TaintSharedContentCheck()
+        assert m.TECHNIQUE_ID == "T1080"
+
+    def test_nfs_no_root_squash(self):
+        from modules.lateral_movement.T1080_taint_shared_content import TaintSharedContentCheck
+        session = make_session({
+            "cat /etc/exports": CommandResult("/export *(rw,no_root_squash)\n", "", 0),
+            "testparm -s": CommandResult("", "", 1),
+            "mount -t nfs": CommandResult("", "", 1),
+        })
+        m = TaintSharedContentCheck()
+        result = m.check(session)
+        assert result.status == Status.VULNERABLE
+        assert any("no_root_squash" in f.title for f in result.findings)

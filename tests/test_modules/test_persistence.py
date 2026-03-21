@@ -680,3 +680,68 @@ class TestTrafficSignalingCheck:
         result = m.check(session)
         assert result.status == Status.VULNERABLE
         assert result.finding_count >= 4
+
+
+# ---------------------------------------------------------------------------
+# T1547.013 — XDG Autostart Entries
+# ---------------------------------------------------------------------------
+
+
+class TestXdgAutostartCheck:
+    def test_attributes(self):
+        from modules.persistence.T1547_013_xdg_autostart import XdgAutostartCheck
+        m = XdgAutostartCheck()
+        assert m.TECHNIQUE_ID == "T1547.013"
+        assert m.TACTIC == Tactic.PERSISTENCE
+
+    def test_writable_system_autostart(self):
+        from modules.persistence.T1547_013_xdg_autostart import XdgAutostartCheck
+        session = make_session({
+            "find /home -path '*/.config/autostart": CommandResult("", "", 1),
+            "find /etc/xdg/autostart": CommandResult("/etc/xdg/autostart/malware.desktop\n", "", 0),
+            "test -w /etc/xdg/autostart/malware.desktop": CommandResult("writable\n", "", 0),
+            "test -d /etc/xdg/autostart": CommandResult("", "", 0),
+            "test -w /etc/xdg/autostart": CommandResult("writable\n", "", 0),
+        })
+        m = XdgAutostartCheck()
+        result = m.check(session)
+        assert result.status == Status.VULNERABLE
+
+    def test_clean(self):
+        from modules.persistence.T1547_013_xdg_autostart import XdgAutostartCheck
+        m = XdgAutostartCheck()
+        result = m.check(make_session({}))
+        assert result.status == Status.NOT_VULNERABLE
+
+
+# ---------------------------------------------------------------------------
+# T1546.017 — Udev Rules
+# ---------------------------------------------------------------------------
+
+
+class TestUdevRulesCheck:
+    def test_attributes(self):
+        from modules.persistence.T1546_017_udev_rules import UdevRulesCheck
+        m = UdevRulesCheck()
+        assert m.TECHNIQUE_ID == "T1546.017"
+        assert m.TACTIC == Tactic.PERSISTENCE
+
+    def test_writable_rules_dir(self):
+        from modules.persistence.T1546_017_udev_rules import UdevRulesCheck
+        session = make_session({
+            "test -d /etc/udev/rules.d": CommandResult("", "", 0),
+            "/etc/udev/rules.d": CommandResult("writable\n", "", 0),
+            "test -d /usr/lib/udev/rules.d": CommandResult("", "", 1),
+            "test -d /run/udev/rules.d": CommandResult("", "", 1),
+            "grep -rn 'RUN+='": CommandResult("", "", 1),
+            "find /etc/udev/rules.d/ -name '*.rules'": CommandResult("", "", 1),
+        })
+        m = UdevRulesCheck()
+        result = m.check(session)
+        assert result.status == Status.VULNERABLE
+        assert any("udev" in f.title.lower() or "Writable" in f.title for f in result.findings)
+
+    def test_mitigations(self):
+        from modules.persistence.T1546_017_udev_rules import UdevRulesCheck
+        m = UdevRulesCheck()
+        assert len(m.get_mitigations()) > 0
