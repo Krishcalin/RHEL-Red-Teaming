@@ -1,7 +1,7 @@
 # RHEL-RT — Red Hat Enterprise Linux Red Teaming Tool
 
 <p align="center">
-  <img src="banner.svg" alt="RHEL-RT Banner" width="100%"/>
+  <img src="banner.svg?v=2" alt="RHEL-RT Banner" width="100%"/>
 </p>
 
 An open-source Python-based active scanning tool for red team security testing on Red Hat Enterprise Linux, aligned with the [MITRE ATT&CK Framework (Linux Matrix)](https://attack.mitre.org/matrices/enterprise/linux/).
