@@ -10,7 +10,7 @@ security controls across RHEL 8 and RHEL 9.
 **License**: MIT
 **Python**: 3.10+
 **ATT&CK Matrix**: https://attack.mitre.org/matrices/enterprise/linux/
-**Current Phase**: Phase 10 (Testing & Hardening) — Complete
+**Current Phase**: All phases complete — 190 modules, 5 compliance frameworks, Ansible playbook generator, container security
 
 ---
 
@@ -34,7 +34,8 @@ RHEL-Red-Teaming/
 │   ├── logger.py                  # Structured logging + evidence chain
 │   ├── reporter.py                # Report generation (HTML/JSON/CSV)
 │   ├── mitre_mapper.py            # Maps results → ATT&CK Navigator JSON layers
-│   ├── compliance.py              # CIS Benchmark / NIST 800-53 / CIS RHEL mapping
+│   ├── compliance.py              # CIS/NIST/STIG compliance mapping (5 frameworks)
+│   └── playbook_generator.py      # Ansible remediation playbook generator
 │   └── models.py                  # Data models (ModuleResult, Finding, Target)
 ├── modules/                       # One package per MITRE ATT&CK tactic
 │   ├── __init__.py
@@ -50,7 +51,8 @@ RHEL-Red-Teaming/
 │   ├── collection/                # TA0009 — 14 techniques
 │   ├── command_and_control/       # TA0011 — 18 techniques
 │   ├── exfiltration/              # TA0010 — 8 techniques
-│   └── impact/                    # TA0040 — 15 techniques
+│   ├── impact/                    # TA0040 — 15 techniques
+│   └── container_security/        # CS001–CS010 — 10 container modules
 ├── templates/                     # Jinja2 report templates
 │   └── report.html
 ├── reports/                       # Generated report output (gitignored)
@@ -592,24 +594,34 @@ Required class attributes: `TECHNIQUE_ID`, `TECHNIQUE_NAME`, `TACTIC`, `SEVERITY
 - [x] T1048 Exfiltration Over Alternative Protocol (DNS/ICMP tunneling, FTP)
 - [x] T1041 Exfiltration Over C2 Channel (HTTP clients, data staging, DLP)
 
-### Phase 8 — Impact (15 techniques)
-- [ ] T1485 Data Destruction
-- [ ] T1486 Data Encrypted for Impact (ransomware feasibility)
-- [ ] T1565 Data Manipulation (stored, transmitted, runtime)
-- [ ] T1489 Service Stop
-- [ ] T1529 System Shutdown/Reboot
-- [ ] T1490 Inhibit System Recovery
-- [ ] T1531 Account Access Removal
-- [ ] T1491 Defacement (internal, external)
-- [ ] T1561 Disk Wipe (content, structure)
-- [ ] T1499 Endpoint Denial of Service
-- [ ] T1498 Network Denial of Service
-- [ ] T1496 Resource Hijacking (compute, bandwidth)
-- [ ] T1495 Firmware Corruption
-- [ ] T1657 Financial Theft
-- [ ] T1667 Email Bombing
+### Phase 8 — Impact (15 techniques) (COMPLETE)
+- [x] T1485 Data Destruction
+- [x] T1486 Data Encrypted for Impact (ransomware feasibility)
+- [x] T1565 Data Manipulation (stored, transmitted, runtime)
+- [x] T1489 Service Stop
+- [x] T1529 System Shutdown/Reboot
+- [x] T1490 Inhibit System Recovery
+- [x] T1531 Account Access Removal
+- [x] T1491 Defacement (internal, external)
+- [x] T1561 Disk Wipe (content, structure)
+- [x] T1499 Endpoint Denial of Service
+- [x] T1498 Network Denial of Service
+- [x] T1496 Resource Hijacking (compute, bandwidth)
+- [x] T1495 Firmware Corruption
+- [x] T1657 Financial Theft
+- [x] T1667 Email Bombing
 
-### Phase 9 — Reporting & ATT&CK Integration (COMPLETE)
+### Phase 9 — Initial Access & Collection (24 modules) (COMPLETE)
+- [x] T1659 Content Injection, T1189 Drive-by, T1190 Exploit Public App
+- [x] T1133 External Remote Services, T1200 Hardware Additions
+- [x] T1566 Phishing, T1195 Supply Chain, T1199 Trusted Relationship
+- [x] T1078 Valid Accounts, T1669 WiFi Networks
+- [x] T1557 AitM, T1560 Archive Data, T1123 Audio Capture, T1119 Automated Collection
+- [x] T1115 Clipboard, T1213 Data Repos, T1005 Local Data, T1039 Network Shares
+- [x] T1025 Removable Media, T1074 Data Staged, T1114 Email, T1056 Input Capture
+- [x] T1113 Screen Capture, T1125 Video Capture
+
+### Phase 10 — Reporting & Compliance (COMPLETE)
 - [x] ATT&CK Navigator JSON layer export (Linux platform)
 - [x] HTML report with executive summary and severity breakdown
 - [x] JSON/CSV machine-readable output with compliance columns
@@ -617,34 +629,57 @@ Required class attributes: `TECHNIQUE_ID`, `TECHNIQUE_NAME`, `TACTIC`, `SEVERITY
 - [x] CIS Controls v8 mapping (24 techniques, ~60 controls)
 - [x] NIST SP 800-53 Rev. 5 mapping (28 techniques, ~55 controls)
 - [x] CIS RHEL 9 Benchmark mapping (14 techniques, ~35 recommendations)
+- [x] DISA STIG RHEL 8 mapping (30 techniques, 75+ rule IDs)
+- [x] DISA STIG RHEL 9 mapping (30 techniques, 70+ rule IDs)
 - [x] Compliance dashboard with per-framework coverage meters
 
-### Phase 10 — Testing & Hardening (COMPLETE)
+### Phase 11 — Testing & CI/CD (COMPLETE)
 - [x] Unit tests for all core components (models, reporter, mitre_mapper, logger, base module)
-- [x] Unit tests for all module tactics (discovery, execution, credential access, persistence, privilege escalation, defense evasion, lateral movement, C2, exfiltration)
+- [x] Unit tests for all 12 module tactics + container security (30+ test files)
 - [x] Safety controls validation (simulate flag, cleanup invocation, OS guard, root guard)
 - [x] CLI tests (parse_tactic, load_config, click commands)
 - [x] CI/CD pipeline (GitHub Actions — Python 3.10/3.11/3.12, ruff, mypy, coverage)
 
+### Phase 12 — Ansible Remediation Playbook Generator (COMPLETE)
+- [x] 30+ technique-to-Ansible-task mappings (lineinfile, file, systemd, sysctl, selinux, etc.)
+- [x] Auto-generation from finding remediation strings as fallback
+- [x] Severity and tag filtering (--severity critical, --tags stig,ssh)
+- [x] Per-technique playbook generation (--per-technique)
+- [x] Auto-generates playbook during scan when vulnerabilities found
+- [x] CLI `remediate` command for post-scan playbook generation
+
+### Phase 13 — Container Security (COMPLETE)
+- [x] CS001 Runtime Configuration (Podman vs Docker, rootless, Docker socket)
+- [x] CS002 Image Security (signing policy, vulnerability scanners, untrusted images)
+- [x] CS003 Privilege Escalation (--privileged, capabilities, host namespaces)
+- [x] CS004 Network Security (port exposure, host network, ICC)
+- [x] CS005 Seccomp & SELinux (profiles, labels, no-new-privileges)
+- [x] CS006 Resource Limits (memory, CPU, PID limits)
+- [x] CS007 Secrets Management (env vars, build ARGs, mount paths)
+- [x] CS008 Filesystem Security (read-only rootfs, volume perms, storage driver)
+- [x] CS009 Logging & Monitoring (log driver, health checks, rotation)
+- [x] CS010 Supply Chain (stale images, cosign, Containerfile practices)
+
 ---
 
-## Technique Count Summary
+## Module Count Summary
 
-| Tactic | Techniques | Sub-techniques | Total Checks |
-|--------|-----------|---------------|-------------|
-| Initial Access | 10 | 10 | 17 |
-| Execution | 10 | 13 | 17 |
-| Persistence | 18 | 18 | 28 |
-| Privilege Escalation | 12 | 18 | 25 |
-| Defense Evasion | 26 | 55 | 64 |
-| Credential Access | 15 | 16 | 26 |
-| Discovery | 26 | 8 | 30 |
-| Lateral Movement | 8 | 3 | 10 |
-| Collection | 14 | 9 | 17 |
-| Command & Control | 18 | 20 | 30 |
-| Exfiltration | 8 | 8 | 14 |
-| Impact | 15 | 9 | 19 |
-| **Total** | **180** | **187** | **297** |
+| Tactic | Modules Implemented |
+|--------|-------------------|
+| Initial Access | 10 |
+| Execution | 10 |
+| Persistence | 17 |
+| Privilege Escalation | 12 |
+| Defense Evasion | 26 |
+| Credential Access | 16 |
+| Discovery | 26 |
+| Lateral Movement | 8 |
+| Collection | 14 |
+| Command & Control | 18 |
+| Exfiltration | 8 |
+| Impact | 15 |
+| Container Security | 10 |
+| **Total** | **190** |
 
 ---
 

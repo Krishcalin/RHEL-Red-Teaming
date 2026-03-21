@@ -1,7 +1,7 @@
 # RHEL-RT — Red Hat Enterprise Linux Red Teaming Tool
 
 <p align="center">
-  <img src="banner.svg?v=2" alt="RHEL-RT Banner" width="100%"/>
+  <img src="banner.svg?v=3" alt="RHEL-RT Banner" width="100%"/>
 </p>
 
 An open-source Python-based active scanning tool for red team security testing on Red Hat Enterprise Linux, aligned with the [MITRE ATT&CK Framework (Linux Matrix)](https://attack.mitre.org/matrices/enterprise/linux/).
@@ -9,20 +9,24 @@ An open-source Python-based active scanning tool for red team security testing o
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://python.org)
 [![MITRE ATT&CK](https://img.shields.io/badge/MITRE%20ATT%26CK-v16-red.svg)](https://attack.mitre.org)
+[![Modules](https://img.shields.io/badge/Modules-190-e94560.svg)](#mitre-attck-coverage)
+[![Compliance](https://img.shields.io/badge/Compliance-5%20Frameworks-4ecca3.svg)](#compliance-frameworks)
 
 ---
 
 ## Overview
 
-RHEL-RT is a security validation and verification tool that systematically tests security controls on RHEL 8 and RHEL 9 systems. It maps every check to a specific MITRE ATT&CK technique, providing security teams with actionable insights and ATT&CK Navigator heatmaps.
+RHEL-RT is a security validation and verification tool that systematically tests security controls on RHEL 8 and RHEL 9 systems. It maps every check to a specific MITRE ATT&CK technique, providing security teams with actionable insights, ATT&CK Navigator heatmaps, and **auto-generated Ansible remediation playbooks**.
 
 ### Key Features
 
-- **108 modules implemented** across 9 ATT&CK tactics — Discovery, Credential Access, Privilege Escalation, Execution, Persistence, Defense Evasion, Lateral Movement, C2, Exfiltration
+- **190 modules** — 180 ATT&CK technique modules across all 12 tactics + 10 container security modules
 - **Safe by default** — passive, read-only checks; active simulation requires explicit `--simulate` flag
+- **Ansible playbook generator** — auto-generates remediation playbooks from scan findings with severity/tag filtering
 - **ATT&CK Navigator export** — JSON layers for visual heatmap analysis
 - **Multi-format reporting** — HTML (dark-themed with per-technique detail pages), JSON, CSV
-- **Compliance mapping** — CIS Controls v8, NIST SP 800-53 Rev. 5, CIS RHEL 9 Benchmark
+- **5 compliance frameworks** — CIS Controls v8, NIST SP 800-53, CIS RHEL 9 Benchmark, DISA STIG RHEL 8, DISA STIG RHEL 9
+- **Container security** — Podman/Docker hardening (10 modules: runtime, images, privileges, networking, seccomp, secrets, filesystem, logging, supply chain)
 - **Local & remote scanning** — direct execution or SSH (paramiko)
 - **RHEL-specific controls** — SELinux, firewalld, auditd, PAM, FIPS, crypto policies, systemd sandboxing
 - **Module auto-discovery** — drop a technique module into `modules/` and it's automatically loaded
@@ -68,6 +72,15 @@ python main.py scan --target localhost --technique T1082
 # Generate HTML report from a previous scan
 python main.py report --input reports/scan_abc123_2026-03-19.json --format html
 
+# Generate Ansible remediation playbook from scan results
+python main.py remediate --input reports/scan_abc123.json
+
+# Generate playbook for critical findings only, filtered by STIG tags
+python main.py remediate --input scan.json --severity critical --tags stig
+
+# Generate one playbook per vulnerable technique
+python main.py remediate --input scan.json --per-technique
+
 # List all available modules
 python main.py list-modules
 
@@ -81,37 +94,39 @@ python main.py list-tactics
 
 ```
 RHEL-Red-Teaming/
-├── config/                     # YAML configuration
-│   ├── settings.yaml           # Global settings (targets, credentials)
-│   ├── techniques.yaml         # Enable/disable specific techniques
-│   └── profiles/               # Scan profiles (quick, full, stealth)
-├── core/                       # Core engine
-│   ├── engine.py               # Orchestrator with module auto-discovery
-│   ├── session.py              # Local + SSH session management
-│   ├── models.py               # Data models (Target, Finding, ModuleResult)
-│   ├── banner.py               # Professional ASCII banner
-│   ├── logger.py               # Structured logging + evidence chain
-│   ├── reporter.py             # Report generation (HTML/JSON/CSV)
-│   ├── mitre_mapper.py         # ATT&CK Navigator JSON layer export
-│   └── compliance.py           # CIS/NIST 800-53/CIS RHEL compliance mapping
-├── modules/                    # Technique modules (one per ATT&CK technique)
-│   ├── base.py                 # BaseModule abstract class
-│   ├── discovery/              # TA0007 — 26 techniques
-│   ├── credential_access/      # TA0006 — 15 techniques
-│   ├── privilege_escalation/   # TA0004 — 12 techniques
-│   ├── defense_evasion/        # TA0005 — 26 techniques
-│   ├── persistence/            # TA0003 — 18 techniques
-│   ├── execution/              # TA0002 — 10 techniques
-│   ├── lateral_movement/       # TA0008 — 3 modules implemented
-│   ├── command_and_control/    # TA0011 — 3 modules implemented
-│   ├── exfiltration/           # TA0010 — 2 modules implemented
-│   ├── collection/             # TA0009 — planned
-│   ├── initial_access/         # TA0001 — planned
-│   └── impact/                 # TA0040 — planned
-├── templates/                  # Jinja2 HTML report template
-├── tests/                      # pytest test suite
-├── main.py                     # CLI entry point (click)
-└── pyproject.toml              # Project metadata
+├── config/                        # YAML configuration
+│   ├── settings.yaml              # Global settings (targets, credentials)
+│   ├── techniques.yaml            # Enable/disable specific techniques
+│   └── profiles/                  # Scan profiles (quick, full, stealth)
+├── core/                          # Core engine
+│   ├── engine.py                  # Orchestrator with module auto-discovery
+│   ├── session.py                 # Local + SSH session management
+│   ├── models.py                  # Data models (Target, Finding, ModuleResult)
+│   ├── banner.py                  # Professional ASCII banner
+│   ├── logger.py                  # Structured logging + evidence chain
+│   ├── reporter.py                # Report generation (HTML/JSON/CSV)
+│   ├── mitre_mapper.py            # ATT&CK Navigator JSON layer export
+│   ├── compliance.py              # CIS/NIST/STIG compliance mapping
+│   └── playbook_generator.py      # Ansible remediation playbook generator
+├── modules/                       # Technique modules (one per ATT&CK technique)
+│   ├── base.py                    # BaseModule abstract class
+│   ├── initial_access/            # TA0001 — 10 techniques
+│   ├── execution/                 # TA0002 — 10 techniques
+│   ├── persistence/               # TA0003 — 17 techniques
+│   ├── privilege_escalation/      # TA0004 — 12 techniques
+│   ├── defense_evasion/           # TA0005 — 26 techniques
+│   ├── credential_access/         # TA0006 — 16 techniques
+│   ├── discovery/                 # TA0007 — 26 techniques
+│   ├── lateral_movement/          # TA0008 — 8 techniques
+│   ├── collection/                # TA0009 — 14 techniques
+│   ├── command_and_control/       # TA0011 — 18 techniques
+│   ├── exfiltration/              # TA0010 — 8 techniques
+│   ├── impact/                    # TA0040 — 15 techniques
+│   └── container_security/        # CS001–CS010 — 10 container modules
+├── templates/                     # Jinja2 HTML report template
+├── tests/                         # pytest test suite (30+ test files)
+├── main.py                        # CLI entry point (click)
+└── pyproject.toml                 # Project metadata
 ```
 
 ### How It Works
@@ -122,7 +137,8 @@ RHEL-Red-Teaming/
 4. Results are collected as `ModuleResult` objects with `Finding` details
 5. **Reporter** outputs HTML/JSON/CSV reports with compliance data
 6. **MitreMapper** exports ATT&CK Navigator JSON layers for visual analysis
-7. **ComplianceMapper** enriches results with CIS Controls, NIST 800-53, and CIS RHEL Benchmark refs
+7. **ComplianceMapper** enriches results with CIS Controls, NIST 800-53, CIS RHEL Benchmark, and DISA STIG refs
+8. **PlaybookGenerator** creates Ansible remediation playbooks from vulnerable findings
 
 ### Writing a Module
 
@@ -171,23 +187,62 @@ Save as `modules/discovery/T1082_system_info.py` — the engine discovers it aut
 
 ## MITRE ATT&CK Coverage
 
-| Tactic | ID | Techniques | Priority Checks |
-|--------|----|-----------|-----------------|
-| Initial Access | TA0001 | 10 | Valid accounts, public-facing app exploits, SSH exposure |
+| Tactic | ID | Modules | Key Checks |
+|--------|----|---------|------------|
+| Initial Access | TA0001 | 10 | Valid accounts, public app exploits, SSH exposure, supply chain, phishing, WiFi |
 | Execution | TA0002 | 10 | Shell restrictions, cron/at/systemd, scripting interpreters |
-| Persistence | TA0003 | 18 | Systemd services, cron, SSH keys, PAM, udev rules |
+| Persistence | TA0003 | 17 | Systemd services, cron, SSH keys, PAM, udev rules, XDG autostart |
 | Privilege Escalation | TA0004 | 12 | SUID/SGID, sudo misconfig, kernel CVEs, container escape |
-| Defense Evasion | TA0005 | 26 | SELinux, auditd, rootkits, log tampering, masquerading |
-| Credential Access | TA0006 | 15 | /etc/shadow, SSH keys, PAM, Kerberos, credential files |
+| Defense Evasion | TA0005 | 26 | SELinux, auditd, rootkits, log tampering, masquerading, PATH hijacking, hidden users |
+| Credential Access | TA0006 | 16 | /etc/shadow, SSH keys, PAM, Kerberos, network sniffing, credential files |
 | Discovery | TA0007 | 26 | System info, accounts, network, processes, services |
-| Lateral Movement | TA0008 | 3 | SSH hardening, SMB/NFS, PtH/PtT, tool transfer |
-| Command & Control | TA0011 | 3 | Egress filtering, DNS tunneling, encrypted channels, proxy |
-| Exfiltration | TA0010 | 2 | DNS/ICMP exfil, C2 channel exfil, data staging, DLP |
-| Collection | TA0009 | — | Planned |
-| Initial Access | TA0001 | — | Planned |
-| Impact | TA0040 | — | Planned |
+| Lateral Movement | TA0008 | 8 | SSH hardening, SMB/NFS, session hijacking, deployment tools, shared content |
+| Collection | TA0009 | 14 | Screen/audio/video capture, clipboard, email, data staging, input capture |
+| Command & Control | TA0011 | 18 | Egress filtering, DNS tunneling, encrypted channels, proxy, remote access tools |
+| Exfiltration | TA0010 | 8 | DNS/ICMP exfil, cloud storage, USB, scheduled transfers, web services |
+| Impact | TA0040 | 15 | Data destruction, ransomware, service stop, DoS, firmware, resource hijacking |
 
-**Implemented: 108 technique modules across 9 tactics**
+**180 ATT&CK technique modules + 10 container security modules = 190 total**
+
+### Container Security Modules (CS001–CS010)
+
+| Module | Area | Key Checks |
+|--------|------|------------|
+| CS001 | Runtime Config | Podman vs Docker, rootless mode, Docker socket, registries |
+| CS002 | Image Security | Signature policy, vulnerability scanners, untrusted images |
+| CS003 | Privilege Escalation | --privileged, dangerous capabilities, host namespaces/mounts |
+| CS004 | Network Security | Port exposure, host network mode, inter-container communication |
+| CS005 | Seccomp & SELinux | seccomp profiles, SELinux labels, no-new-privileges |
+| CS006 | Resource Limits | Memory, CPU, PID limits per container |
+| CS007 | Secrets Management | Env var secrets, build ARG leaks, secret mount paths |
+| CS008 | Filesystem Security | Read-only rootfs, volume permissions, storage driver |
+| CS009 | Logging & Monitoring | Log driver, health checks, log rotation |
+| CS010 | Supply Chain | Stale images, cosign signing, Containerfile best practices |
+
+---
+
+## Ansible Remediation Playbooks
+
+RHEL-RT auto-generates Ansible playbooks from scan findings:
+
+```bash
+# Generated automatically after scan if vulnerabilities found
+python main.py scan --target 192.168.1.20 --profile full
+
+# Or generate from saved scan results
+python main.py remediate --input reports/scan_abc123.json
+
+# Filter by severity
+python main.py remediate --input scan.json --severity critical
+
+# Filter by compliance tags (stig, cis, ssh, audit, etc.)
+python main.py remediate --input scan.json --tags stig,ssh
+
+# One playbook per vulnerable technique
+python main.py remediate --input scan.json --per-technique
+```
+
+**30+ technique mappings** to proper Ansible modules (lineinfile, file, systemd, sysctl, selinux, pam_limits, dnf, etc.) plus auto-generated tasks from finding remediations.
 
 ---
 
@@ -207,7 +262,21 @@ Save as `modules/discovery/T1082_system_info.py` — the engine discovers it aut
 | **Systemd sandboxing** | ProtectSystem, NoNewPrivileges, service isolation |
 | **Package integrity** | rpm -Va, GPG verification, repo signing |
 | **Crypto policies** | TLS minimum version, allowed ciphers |
-| **Container security** | Podman rootless, namespaces, seccomp profiles |
+| **Container security** | Podman rootless, namespaces, seccomp, image signing |
+
+---
+
+## Compliance Frameworks
+
+Each technique is mapped to relevant controls from 5 frameworks:
+
+| Framework | Techniques Mapped | Controls |
+|-----------|------------------|----------|
+| **CIS Controls v8** | 24 | ~60 controls |
+| **NIST SP 800-53 Rev. 5** | 28 | ~55 controls |
+| **CIS RHEL 9 Benchmark** | 14 | ~35 recommendations |
+| **DISA STIG RHEL 8** (V1R14+) | 30 | 75+ rule IDs |
+| **DISA STIG RHEL 9** (V1R2+) | 30 | 70+ rule IDs |
 
 ---
 
@@ -227,46 +296,46 @@ Save as `modules/discovery/T1082_system_info.py` — the engine discovers it aut
 Dark-themed, interactive HTML report with:
 - Executive summary (total checks, vulnerable, secure, errors)
 - Severity breakdown bar chart (critical/high/medium/low/info)
-- Compliance dashboard with per-framework coverage meters (CIS Controls, NIST 800-53, CIS RHEL Benchmark)
+- Compliance dashboard with per-framework coverage meters
 - Results grouped by ATT&CK tactic with clickable technique links
 - Per-technique detail pages with findings, evidence, remediation, mitigations, and compliance mapping
-- Direct links to ATT&CK technique pages
 
 ### ATT&CK Navigator Layer
 JSON layer file importable into [MITRE ATT&CK Navigator](https://mitre-attack.github.io/attack-navigator/):
 - Color-coded by status (red = vulnerable, green = secure)
 - Scored by severity (critical = 100, high = 75, medium = 50)
-- Includes comments with finding details
+
+### Ansible Playbook
+Auto-generated YAML playbook with:
+- Proper Ansible modules (not raw shell commands)
+- Severity and tag filtering
+- Per-technique or consolidated output
+- Service restart handlers
 
 ### JSON / CSV
-Machine-readable output for integration with SIEM, ticketing, or CI/CD pipelines.
-- JSON includes per-result compliance references and compliance summary
-- CSV includes CIS Controls, NIST 800-53, and CIS RHEL Benchmark columns
-
-### Compliance Frameworks
-Each technique is mapped to relevant controls from:
-- **CIS Controls v8** — 24 techniques mapped to ~60 controls
-- **NIST SP 800-53 Rev. 5** — 28 techniques mapped to ~55 controls
-- **CIS RHEL 9 Benchmark** — 14 techniques mapped to ~35 recommendations
+Machine-readable output with compliance columns for all 5 frameworks.
 
 ---
 
 ## Development Status
 
-| Phase | Description | Modules | Status |
-|-------|-------------|---------|--------|
-| 1 | Foundation (engine, session, CLI, config, reporting) | Core | Done |
-| 2 | Discovery Modules (26 techniques) | 26 | Done |
-| 3 | Credential Access (15 techniques) | 14 | Done |
-| 4 | Privilege Escalation (12 techniques) | 12 | Done |
-| 5 | Execution & Persistence (25 techniques) | 25 | Done |
-| 6 | Defense Evasion (23 techniques) | 23 | Done |
-| 7 | Lateral Movement, C2 & Exfiltration (8 modules) | 8 | Done |
-| 8 | Impact (15 techniques) | — | Planned |
-| 9 | Reporting & Compliance (CIS/NIST/CIS RHEL mapping) | Core | Done |
-| 10 | Testing & CI/CD (pytest, GitHub Actions, safety controls) | Core | Done |
+| Phase | Description | Status |
+|-------|-------------|--------|
+| 1 | Foundation (engine, session, CLI, config, reporting) | Done |
+| 2 | Discovery Modules (26 techniques) | Done |
+| 3 | Credential Access (16 techniques) | Done |
+| 4 | Privilege Escalation (12 techniques) | Done |
+| 5 | Execution & Persistence (27 techniques) | Done |
+| 6 | Defense Evasion (26 techniques) | Done |
+| 7 | Lateral Movement, C2 & Exfiltration (34 modules) | Done |
+| 8 | Impact (15 techniques) | Done |
+| 9 | Initial Access & Collection (24 modules) | Done |
+| 10 | Reporting & Compliance (5 frameworks) | Done |
+| 11 | Testing & CI/CD (30+ test files, GitHub Actions) | Done |
+| 12 | Ansible Remediation Playbook Generator | Done |
+| 13 | Container Security (10 modules) | Done |
 
-**Current: 108 technique modules implemented across 9 tactics.**
+**190 modules implemented. All phases complete.**
 
 ---
 
